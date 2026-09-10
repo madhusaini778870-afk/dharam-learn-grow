@@ -21,6 +21,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as CourseCourseIdRouteImport } from './routes/course.$courseId'
 import { Route as ApiAiDoubtRouteImport } from './routes/api/ai/doubt'
+import { Route as LessonCourseIdLessonIdRouteImport } from './routes/lesson.$courseId.$lessonId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -82,6 +83,11 @@ const ApiAiDoubtRoute = ApiAiDoubtRouteImport.update({
   path: '/api/ai/doubt',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LessonCourseIdLessonIdRoute = LessonCourseIdLessonIdRouteImport.update({
+  id: '/lesson/$courseId/$lessonId',
+  path: '/lesson/$courseId/$lessonId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/course/$courseId': typeof CourseCourseIdRoute
   '/api/ai/doubt': typeof ApiAiDoubtRoute
+  '/lesson/$courseId/$lessonId': typeof LessonCourseIdLessonIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/course/$courseId': typeof CourseCourseIdRoute
   '/api/ai/doubt': typeof ApiAiDoubtRoute
+  '/lesson/$courseId/$lessonId': typeof LessonCourseIdLessonIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/course/$courseId': typeof CourseCourseIdRoute
   '/api/ai/doubt': typeof ApiAiDoubtRoute
+  '/lesson/$courseId/$lessonId': typeof LessonCourseIdLessonIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/course/$courseId'
     | '/api/ai/doubt'
+    | '/lesson/$courseId/$lessonId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/course/$courseId'
     | '/api/ai/doubt'
+    | '/lesson/$courseId/$lessonId'
   id:
     | '__root__'
     | '/'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/course/$courseId'
     | '/api/ai/doubt'
+    | '/lesson/$courseId/$lessonId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -184,6 +196,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   CourseCourseIdRoute: typeof CourseCourseIdRoute
   ApiAiDoubtRoute: typeof ApiAiDoubtRoute
+  LessonCourseIdLessonIdRoute: typeof LessonCourseIdLessonIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -272,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAiDoubtRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lesson/$courseId/$lessonId': {
+      id: '/lesson/$courseId/$lessonId'
+      path: '/lesson/$courseId/$lessonId'
+      fullPath: '/lesson/$courseId/$lessonId'
+      preLoaderRoute: typeof LessonCourseIdLessonIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -288,6 +308,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   CourseCourseIdRoute: CourseCourseIdRoute,
   ApiAiDoubtRoute: ApiAiDoubtRoute,
+  LessonCourseIdLessonIdRoute: LessonCourseIdLessonIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
