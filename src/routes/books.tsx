@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { listNotes } from "@/lib/catalog.functions";
 import { Screen, Footer, PageHeader, DocIcon, CloseIcon } from "@/components/app-shell";
-import { CatalogUnavailable, ListSkeleton, RetryButton, StateCard } from "@/components/states";
+import { ListSkeleton, RetryButton, StateCard } from "@/components/states";
 
 export const Route = createFileRoute("/books")({
   head: () => ({

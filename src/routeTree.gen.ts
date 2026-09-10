@@ -11,10 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BooksRouteImport } from './routes/books'
 import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as HomeRouteImport } from './routes/home'
+import { Route as LiveRouteImport } from './routes/live'
 import { Route as MyLearningRouteImport } from './routes/my-learning'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ApiAiDoubtRouteImport } from './routes/api/ai/doubt'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -24,6 +27,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BooksRoute = BooksRouteImport.update({
+  id: '/books',
+  path: '/books',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesRoute = CoursesRouteImport.update({
@@ -36,6 +44,11 @@ const HomeRoute = HomeRouteImport.update({
   path: '/home',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LiveRoute = LiveRouteImport.update({
+  id: '/live',
+  path: '/live',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MyLearningRoute = MyLearningRouteImport.update({
   id: '/my-learning',
   path: '/my-learning',
@@ -46,54 +59,92 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAiDoubtRoute = ApiAiDoubtRouteImport.update({
+  id: '/api/ai/doubt',
+  path: '/api/ai/doubt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/books': typeof BooksRoute
   '/courses': typeof CoursesRoute
   '/home': typeof HomeRoute
+  '/live': typeof LiveRoute
   '/my-learning': typeof MyLearningRoute
   '/profile': typeof ProfileRoute
+  '/api/ai/doubt': typeof ApiAiDoubtRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/books': typeof BooksRoute
   '/courses': typeof CoursesRoute
   '/home': typeof HomeRoute
+  '/live': typeof LiveRoute
   '/my-learning': typeof MyLearningRoute
   '/profile': typeof ProfileRoute
+  '/api/ai/doubt': typeof ApiAiDoubtRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/books': typeof BooksRoute
   '/courses': typeof CoursesRoute
   '/home': typeof HomeRoute
+  '/live': typeof LiveRoute
   '/my-learning': typeof MyLearningRoute
   '/profile': typeof ProfileRoute
+  '/api/ai/doubt': typeof ApiAiDoubtRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/courses' | '/home' | '/my-learning' | '/profile'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/books'
+    | '/courses'
+    | '/home'
+    | '/live'
+    | '/my-learning'
+    | '/profile'
+    | '/api/ai/doubt'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/courses' | '/home' | '/my-learning' | '/profile'
+  to:
+    | '/'
+    | '/auth'
+    | '/books'
+    | '/courses'
+    | '/home'
+    | '/live'
+    | '/my-learning'
+    | '/profile'
+    | '/api/ai/doubt'
   id:
     | '__root__'
     | '/'
     | '/auth'
+    | '/books'
     | '/courses'
     | '/home'
+    | '/live'
     | '/my-learning'
     | '/profile'
+    | '/api/ai/doubt'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  BooksRoute: typeof BooksRoute
   CoursesRoute: typeof CoursesRoute
   HomeRoute: typeof HomeRoute
+  LiveRoute: typeof LiveRoute
   MyLearningRoute: typeof MyLearningRoute
   ProfileRoute: typeof ProfileRoute
+  ApiAiDoubtRoute: typeof ApiAiDoubtRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -112,6 +163,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/books': {
+      id: '/books'
+      path: '/books'
+      fullPath: '/books'
+      preLoaderRoute: typeof BooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/courses': {
       id: '/courses'
       path: '/courses'
@@ -124,6 +182,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live': {
+      id: '/live'
+      path: '/live'
+      fullPath: '/live'
+      preLoaderRoute: typeof LiveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/my-learning': {
@@ -140,16 +205,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ai/doubt': {
+      id: '/api/ai/doubt'
+      path: '/api/ai/doubt'
+      fullPath: '/api/ai/doubt'
+      preLoaderRoute: typeof ApiAiDoubtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  BooksRoute: BooksRoute,
   CoursesRoute: CoursesRoute,
   HomeRoute: HomeRoute,
+  LiveRoute: LiveRoute,
   MyLearningRoute: MyLearningRoute,
   ProfileRoute: ProfileRoute,
+  ApiAiDoubtRoute: ApiAiDoubtRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
