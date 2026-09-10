@@ -10,33 +10,193 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BooksRouteImport } from './routes/books'
+import { Route as CoursesRouteImport } from './routes/courses'
+import { Route as DoubtSolverRouteImport } from './routes/doubt-solver'
+import { Route as HomeRouteImport } from './routes/home'
+import { Route as LiveRouteImport } from './routes/live'
+import { Route as MyLearningRouteImport } from './routes/my-learning'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as CourseCourseIdRouteImport } from './routes/course.$courseId'
+import { Route as ApiAiDoubtRouteImport } from './routes/api/ai/doubt'
+import { Route as LessonCourseIdLessonIdRouteImport } from './routes/lesson.$courseId.$lessonId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BooksRoute = BooksRouteImport.update({
+  id: '/books',
+  path: '/books',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoursesRoute = CoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DoubtSolverRoute = DoubtSolverRouteImport.update({
+  id: '/doubt-solver',
+  path: '/doubt-solver',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HomeRoute = HomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveRoute = LiveRouteImport.update({
+  id: '/live',
+  path: '/live',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyLearningRoute = MyLearningRouteImport.update({
+  id: '/my-learning',
+  path: '/my-learning',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CourseCourseIdRoute = CourseCourseIdRouteImport.update({
+  id: '/course/$courseId',
+  path: '/course/$courseId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiDoubtRoute = ApiAiDoubtRouteImport.update({
+  id: '/api/ai/doubt',
+  path: '/api/ai/doubt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LessonCourseIdLessonIdRoute = LessonCourseIdLessonIdRouteImport.update({
+  id: '/lesson/$courseId/$lessonId',
+  path: '/lesson/$courseId/$lessonId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/books': typeof BooksRoute
+  '/courses': typeof CoursesRoute
+  '/doubt-solver': typeof DoubtSolverRoute
+  '/home': typeof HomeRoute
+  '/live': typeof LiveRoute
+  '/my-learning': typeof MyLearningRoute
+  '/profile': typeof ProfileRoute
+  '/search': typeof SearchRoute
+  '/course/$courseId': typeof CourseCourseIdRoute
+  '/api/ai/doubt': typeof ApiAiDoubtRoute
+  '/lesson/$courseId/$lessonId': typeof LessonCourseIdLessonIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/books': typeof BooksRoute
+  '/courses': typeof CoursesRoute
+  '/doubt-solver': typeof DoubtSolverRoute
+  '/home': typeof HomeRoute
+  '/live': typeof LiveRoute
+  '/my-learning': typeof MyLearningRoute
+  '/profile': typeof ProfileRoute
+  '/search': typeof SearchRoute
+  '/course/$courseId': typeof CourseCourseIdRoute
+  '/api/ai/doubt': typeof ApiAiDoubtRoute
+  '/lesson/$courseId/$lessonId': typeof LessonCourseIdLessonIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/books': typeof BooksRoute
+  '/courses': typeof CoursesRoute
+  '/doubt-solver': typeof DoubtSolverRoute
+  '/home': typeof HomeRoute
+  '/live': typeof LiveRoute
+  '/my-learning': typeof MyLearningRoute
+  '/profile': typeof ProfileRoute
+  '/search': typeof SearchRoute
+  '/course/$courseId': typeof CourseCourseIdRoute
+  '/api/ai/doubt': typeof ApiAiDoubtRoute
+  '/lesson/$courseId/$lessonId': typeof LessonCourseIdLessonIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/books'
+    | '/courses'
+    | '/doubt-solver'
+    | '/home'
+    | '/live'
+    | '/my-learning'
+    | '/profile'
+    | '/search'
+    | '/course/$courseId'
+    | '/api/ai/doubt'
+    | '/lesson/$courseId/$lessonId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/books'
+    | '/courses'
+    | '/doubt-solver'
+    | '/home'
+    | '/live'
+    | '/my-learning'
+    | '/profile'
+    | '/search'
+    | '/course/$courseId'
+    | '/api/ai/doubt'
+    | '/lesson/$courseId/$lessonId'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/books'
+    | '/courses'
+    | '/doubt-solver'
+    | '/home'
+    | '/live'
+    | '/my-learning'
+    | '/profile'
+    | '/search'
+    | '/course/$courseId'
+    | '/api/ai/doubt'
+    | '/lesson/$courseId/$lessonId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
+  BooksRoute: typeof BooksRoute
+  CoursesRoute: typeof CoursesRoute
+  DoubtSolverRoute: typeof DoubtSolverRoute
+  HomeRoute: typeof HomeRoute
+  LiveRoute: typeof LiveRoute
+  MyLearningRoute: typeof MyLearningRoute
+  ProfileRoute: typeof ProfileRoute
+  SearchRoute: typeof SearchRoute
+  CourseCourseIdRoute: typeof CourseCourseIdRoute
+  ApiAiDoubtRoute: typeof ApiAiDoubtRoute
+  LessonCourseIdLessonIdRoute: typeof LessonCourseIdLessonIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +208,107 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/books': {
+      id: '/books'
+      path: '/books'
+      fullPath: '/books'
+      preLoaderRoute: typeof BooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/courses': {
+      id: '/courses'
+      path: '/courses'
+      fullPath: '/courses'
+      preLoaderRoute: typeof CoursesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/doubt-solver': {
+      id: '/doubt-solver'
+      path: '/doubt-solver'
+      fullPath: '/doubt-solver'
+      preLoaderRoute: typeof DoubtSolverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/home': {
+      id: '/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live': {
+      id: '/live'
+      path: '/live'
+      fullPath: '/live'
+      preLoaderRoute: typeof LiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-learning': {
+      id: '/my-learning'
+      path: '/my-learning'
+      fullPath: '/my-learning'
+      preLoaderRoute: typeof MyLearningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/course/$courseId': {
+      id: '/course/$courseId'
+      path: '/course/$courseId'
+      fullPath: '/course/$courseId'
+      preLoaderRoute: typeof CourseCourseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai/doubt': {
+      id: '/api/ai/doubt'
+      path: '/api/ai/doubt'
+      fullPath: '/api/ai/doubt'
+      preLoaderRoute: typeof ApiAiDoubtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lesson/$courseId/$lessonId': {
+      id: '/lesson/$courseId/$lessonId'
+      path: '/lesson/$courseId/$lessonId'
+      fullPath: '/lesson/$courseId/$lessonId'
+      preLoaderRoute: typeof LessonCourseIdLessonIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
+  BooksRoute: BooksRoute,
+  CoursesRoute: CoursesRoute,
+  DoubtSolverRoute: DoubtSolverRoute,
+  HomeRoute: HomeRoute,
+  LiveRoute: LiveRoute,
+  MyLearningRoute: MyLearningRoute,
+  ProfileRoute: ProfileRoute,
+  SearchRoute: SearchRoute,
+  CourseCourseIdRoute: CourseCourseIdRoute,
+  ApiAiDoubtRoute: ApiAiDoubtRoute,
+  LessonCourseIdLessonIdRoute: LessonCourseIdLessonIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
