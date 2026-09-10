@@ -33,7 +33,8 @@ function CoursesScreen() {
   const query = useInfiniteQuery({
     queryKey: ["courses", exam ?? "all"],
     initialPageParam: 1,
-    queryFn: ({ pageParam }) => fetchCourses({ data: { exam, page: pageParam } }),
+    queryFn: ({ pageParam }) =>
+      fetchCourses({ data: exam ? { exam, page: pageParam } : { page: pageParam } }),
     getNextPageParam: (lastPage, allPages) =>
       lastPage.status === "ok" && lastPage.data.hasMore ? allPages.length + 1 : undefined,
     retry: false,
