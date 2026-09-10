@@ -6,7 +6,7 @@ import { Screen, Footer, PageHeader } from "@/components/app-shell";
 import { CourseCard } from "@/components/course-card";
 import { CatalogUnavailable, ListSkeleton, RetryButton, StateCard } from "@/components/states";
 
-type CourseSearch = { exam?: "JEE" | "NEET" };
+type CourseSearch = { exam: "JEE" | "NEET" | undefined };
 
 export const Route = createFileRoute("/courses")({
   validateSearch: (search: Record<string, unknown>): CourseSearch => ({
