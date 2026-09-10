@@ -77,6 +77,7 @@ function MyLearningScreen() {
             action={
               <Link
                 to="/courses"
+                search={{ exam: undefined }}
                 className="press inline-flex rounded-2xl bg-foreground px-5 py-2.5 text-sm font-semibold text-background"
               >
                 Browse courses

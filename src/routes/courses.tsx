@@ -66,7 +66,11 @@ function CoursesScreen() {
           ))}
         </div>
         {exam ? (
-          <Link to="/courses" className="mt-2 inline-block text-[11px] text-muted-foreground">
+          <Link
+            to="/courses"
+            search={{ exam: undefined }}
+            className="mt-2 inline-block text-[11px] text-muted-foreground"
+          >
             Show all exams
           </Link>
         ) : null}

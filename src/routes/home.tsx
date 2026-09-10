@@ -114,7 +114,11 @@ function HomeScreen() {
 
           <div className="mt-6 flex items-center justify-between">
             <h2 className="font-display text-lg">Featured courses</h2>
-            <Link to="/courses" className="text-xs font-medium text-muted-foreground">
+            <Link
+              to="/courses"
+              search={{ exam: undefined }}
+              className="text-xs font-medium text-muted-foreground"
+            >
               See all
             </Link>
           </div>
