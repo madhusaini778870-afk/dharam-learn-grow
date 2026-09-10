@@ -6,7 +6,7 @@ import { getCourse } from "@/lib/catalog.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Screen, PageHeader, LockIcon, ChevronRight, Footer } from "@/components/app-shell";
-import { CatalogUnavailable, ListSkeleton, RetryButton, StateCard } from "@/components/states";
+import { ListSkeleton, RetryButton, StateCard } from "@/components/states";
 
 export const Route = createFileRoute("/course/$courseId")({
   head: () => ({
