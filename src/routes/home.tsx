@@ -88,20 +88,16 @@ function HomeScreen() {
           </Link>
 
           <div className="mt-5 flex rounded-2xl bg-foreground p-1">
-            <Link
-              to="/courses"
-              search={{ exam: "JEE" as const }}
-              className="flex-1 rounded-xl py-2.5 text-center text-sm font-semibold text-background/60"
-            >
-              JEE
-            </Link>
-            <Link
-              to="/courses"
-              search={{ exam: "NEET" as const }}
-              className="flex-1 rounded-xl py-2.5 text-center text-sm font-semibold text-background/60"
-            >
-              NEET
-            </Link>
+            {(["JEE", "NEET", "Class 11", "Class 12"] as const).map((item) => (
+              <Link
+                key={item}
+                to="/courses"
+                search={{ category: item }}
+                className="flex-1 rounded-xl py-2.5 text-center text-[12px] font-semibold text-background/60"
+              >
+                {item}
+              </Link>
+            ))}
           </div>
 
           <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
@@ -118,7 +114,7 @@ function HomeScreen() {
             <h2 className="font-display text-lg">Featured courses</h2>
             <Link
               to="/courses"
-              search={{ exam: undefined }}
+              search={{ category: undefined }}
               className="text-xs font-medium text-muted-foreground"
             >
               See all
@@ -129,22 +125,18 @@ function HomeScreen() {
             {featured.isLoading ? <ListSkeleton count={2} /> : null}
             {featured.isError ? (
               <StateCard
+                tone="warn"
                 title="Network error"
                 body="We couldn't reach the course service. Check your connection and try again."
                 action={<RetryButton onClick={() => featured.refetch()} />}
               />
             ) : null}
-            {featured.data?.status === "unavailable" ? (
-              <CatalogUnavailable reason={featured.data.reason} onRetry={() => featured.refetch()} />
+            {featured.data ? (
+              <SourceStatusPanel sources={featured.data.sources} onRetry={() => featured.refetch()} />
             ) : null}
-            {featured.data?.status === "ok" && featured.data.data.courses.length === 0 ? (
-              <StateCard title="No courses published yet" body="The authorized source returned an empty catalog." />
-            ) : null}
-            {featured.data?.status === "ok"
-              ? featured.data.data.courses
-                  .slice(0, 4)
-                  .map((course) => <CourseCard key={course.id} course={course} />)
-              : null}
+            {featured.data?.courses.slice(0, 4).map((course) => (
+              <CourseCard key={course.id} course={course} />
+            ))}
           </div>
         </div>
       </div>
