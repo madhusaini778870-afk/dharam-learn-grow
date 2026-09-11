@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { getCourse } from "@/lib/catalog.functions";
+import { fetchCourseDetail } from "@/services/courseApi";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { ChevronLeft, SparkIcon } from "@/components/app-shell";
@@ -29,7 +29,7 @@ function LessonScreen() {
   const { courseId, lessonId } = Route.useParams();
   const { session, loading, user } = useAuth();
   const navigate = useNavigate();
-  const fetchCourse = useServerFn(getCourse);
+  const fetchCourse = useServerFn(fetchCourseDetail);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -57,9 +57,10 @@ function LessonScreen() {
     },
   });
 
-  const detail = course.data?.status === "ok" ? course.data.data : null;
+  const detail = course.data?.status === "ok" ? course.data.course : null;
   const chapter = detail?.chapters?.find((item) => item.lessons?.some((l) => l.id === lessonId));
-  const lesson = chapter?.lessons?.find((l) => l.id === lessonId);
+  const lesson = chapter?.lessons?.find((l) => l.id === lessonId) ??
+    detail?.lessons.find((l) => l.id === lessonId);
   const isEnrolled = Boolean(enrollment.data);
 
   async function saveProgress() {

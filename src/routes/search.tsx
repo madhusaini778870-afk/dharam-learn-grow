@@ -1,11 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { searchCatalog } from "@/lib/catalog.functions";
+import { searchCatalogCourses } from "@/services/courseApi";
 import { Screen, Footer, PageHeader, SearchIcon } from "@/components/app-shell";
-import { CourseCard } from "@/components/course-card";
-import { CatalogUnavailable, ListSkeleton, RetryButton, StateCard } from "@/components/states";
+import { CourseCard } from "@/components/CourseCard";
+import { SourceStatusPanel } from "@/components/source-status";
+import { ListSkeleton, RetryButton, StateCard } from "@/components/states";
 
 export const Route = createFileRoute("/search")({
   head: () => ({
@@ -13,22 +14,25 @@ export const Route = createFileRoute("/search")({
       { title: "Search · Dharam Bhai Study" },
       {
         name: "description",
-        content: "Search courses, subjects, chapters, lessons and notes across the authorized catalog.",
+        content:
+          "Search the complete combined catalog: courses, subjects, chapters, lessons, teachers and notes.",
       },
       { property: "og:title", content: "Search · Dharam Bhai Study" },
       { property: "og:description", content: "Search courses, chapters, lessons and notes." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SearchScreen,
 });
 
 function SearchScreen() {
-  const runSearch = useServerFn(searchCatalog);
+  const runSearch = useServerFn(searchCatalogCourses);
   const [term, setTerm] = useState("");
   const [query, setQuery] = useState("");
 
   const results = useQuery({
-    queryKey: ["search", query],
+    queryKey: ["catalog-search", query],
     enabled: query.trim().length > 1,
     queryFn: () => runSearch({ data: { q: query.trim() } }),
     retry: false,
@@ -36,7 +40,7 @@ function SearchScreen() {
 
   return (
     <Screen>
-      <PageHeader title="Search" subtitle="Courses, subjects, chapters, lessons and notes" />
+      <PageHeader title="Search" subtitle="The complete combined catalog" />
 
       <form
         onSubmit={(event) => {
@@ -50,7 +54,7 @@ function SearchScreen() {
           <input
             value={term}
             onChange={(event) => setTerm(event.target.value)}
-            placeholder="Search courses, chapters, notes…"
+            placeholder="Search courses, chapters, teachers, notes…"
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
         </div>
@@ -58,59 +62,30 @@ function SearchScreen() {
 
       <div className="mt-4 space-y-3 px-5">
         {query.trim().length <= 1 ? (
-          <StateCard title="Start typing" body="Search across courses, subjects, chapters, lessons and notes." />
+          <StateCard
+            title="Start typing"
+            body="Search across courses, subjects, chapters, lessons, teachers and notes."
+          />
         ) : null}
-        {results.isLoading && query ? <ListSkeleton count={2} /> : null}
+        {results.isLoading ? <ListSkeleton count={2} /> : null}
         {results.isError ? (
           <StateCard
+            tone="warn"
             title="Search failed"
             body="We couldn't complete the search. Check your connection and try again."
             action={<RetryButton onClick={() => results.refetch()} />}
           />
         ) : null}
-        {results.data?.status === "unavailable" ? (
-          <CatalogUnavailable reason={results.data.reason} onRetry={() => results.refetch()} />
+        {results.data ? (
+          <SourceStatusPanel sources={results.data.sources} onRetry={() => results.refetch()} />
         ) : null}
-        {results.data?.status === "ok" ? (
-          results.data.data.courses.length === 0 &&
-          results.data.data.lessons.length === 0 &&
-          results.data.data.notes.length === 0 ? (
-            <StateCard title="No results" body={`Nothing matched “${query}” in the authorized catalog.`} />
-          ) : (
-            <>
-              {results.data.data.courses.map((course) => (
-                <CourseCard key={course.id} course={course} />
-              ))}
-              {results.data.data.lessons.map((lesson) => (
-                <Link
-                  key={lesson.id}
-                  to="/lesson/$courseId/$lessonId"
-                  params={{ courseId: lesson.courseId, lessonId: lesson.id }}
-                  className="press block rounded-2xl bg-card p-4 ring-1 ring-border"
-                >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    Lesson
-                  </p>
-                  <p className="mt-1 text-sm font-medium">{lesson.title}</p>
-                </Link>
-              ))}
-              {results.data.data.notes.map((note) => (
-                <a
-                  key={note.id}
-                  href={note.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="press block rounded-2xl bg-card p-4 ring-1 ring-border"
-                >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    Notes
-                  </p>
-                  <p className="mt-1 text-sm font-medium">{note.title}</p>
-                </a>
-              ))}
-            </>
-          )
+        {results.data && results.data.courses.length === 0 &&
+        results.data.sources.some((source) => source.status === "ok") ? (
+          <StateCard title="No results" body={`Nothing matched “${query}” in the combined catalog.`} />
         ) : null}
+        {results.data?.courses.map((course) => (
+          <CourseCard key={course.id} course={course} />
+        ))}
       </div>
       <Footer />
     </Screen>
