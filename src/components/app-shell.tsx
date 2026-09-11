@@ -44,7 +44,7 @@ export function Footer() {
 const NAV = [
   { to: "/home", label: "Home", icon: HomeIcon },
   { to: "/courses", label: "Courses", icon: GridIcon },
-  { to: "/my-learning", label: "My Learning", icon: FolderIcon },
+  { to: "/my-learning", label: "My Courses", icon: FolderIcon },
   { to: "/profile", label: "Profile", icon: UserIcon },
 ] as const;
 
