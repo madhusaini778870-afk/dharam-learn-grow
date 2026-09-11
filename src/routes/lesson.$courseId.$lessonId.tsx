@@ -57,9 +57,10 @@ function LessonScreen() {
     },
   });
 
-  const detail = course.data?.status === "ok" ? course.data.data : null;
+  const detail = course.data?.status === "ok" ? course.data.course : null;
   const chapter = detail?.chapters?.find((item) => item.lessons?.some((l) => l.id === lessonId));
-  const lesson = chapter?.lessons?.find((l) => l.id === lessonId);
+  const lesson = chapter?.lessons?.find((l) => l.id === lessonId) ??
+    detail?.lessons.find((l) => l.id === lessonId);
   const isEnrolled = Boolean(enrollment.data);
 
   async function saveProgress() {
