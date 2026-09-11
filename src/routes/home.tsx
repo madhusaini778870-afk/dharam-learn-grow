@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { listCourses } from "@/lib/catalog.functions";
+import { fetchCatalog } from "@/services/courseApi";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Screen,
@@ -13,8 +13,9 @@ import {
   LiveIcon,
   SparkIcon,
 } from "@/components/app-shell";
-import { CourseCard } from "@/components/course-card";
-import { CatalogUnavailable, ListSkeleton, RetryButton, StateCard } from "@/components/states";
+import { CourseCard } from "@/components/CourseCard";
+import { SourceStatusPanel } from "@/components/source-status";
+import { ListSkeleton, RetryButton, StateCard } from "@/components/states";
 
 export const Route = createFileRoute("/home")({
   head: () => ({
@@ -38,16 +39,17 @@ export const Route = createFileRoute("/home")({
 function HomeScreen() {
   const { session, loading, user } = useAuth();
   const navigate = useNavigate();
-  const fetchCourses = useServerFn(listCourses);
+  const loadCatalog = useServerFn(fetchCatalog);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [loading, session, navigate]);
 
   const featured = useQuery({
-    queryKey: ["courses", "featured"],
-    queryFn: () => fetchCourses({ data: {} }),
+    queryKey: ["catalog"],
+    queryFn: () => loadCatalog(),
     retry: false,
+    staleTime: 5 * 60_000,
   });
 
   const firstName = (user?.user_metadata?.["full_name"] as string | undefined)?.split(" ")[0];
