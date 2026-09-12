@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { fetchCatalog } from "@/services/courseApi";
+import { fetchCourses } from "@/services/courseApi";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Screen,
@@ -14,7 +14,6 @@ import {
   SparkIcon,
 } from "@/components/app-shell";
 import { CourseCard } from "@/components/CourseCard";
-import { SourceStatusPanel } from "@/components/source-status";
 import { ListSkeleton, RetryButton, StateCard } from "@/components/states";
 
 export const Route = createFileRoute("/home")({
@@ -39,15 +38,15 @@ export const Route = createFileRoute("/home")({
 function HomeScreen() {
   const { session, loading, user } = useAuth();
   const navigate = useNavigate();
-  const loadCatalog = useServerFn(fetchCatalog);
+  const loadCatalog = useServerFn(fetchCourses);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [loading, session, navigate]);
 
   const featured = useQuery({
-    queryKey: ["catalog"],
-    queryFn: () => loadCatalog(),
+    queryKey: ["courses", "", "all"],
+    queryFn: () => loadCatalog({ data: { cursor: 1 } }),
     retry: false,
     staleTime: 5 * 60_000,
   });
@@ -132,7 +131,6 @@ function HomeScreen() {
               />
             ) : null}
             {featured.data ? (
-              <SourceStatusPanel sources={featured.data.sources} onRetry={() => featured.refetch()} />
             ) : null}
             {featured.data?.courses.slice(0, 4).map((course) => (
               <CourseCard key={course.id} course={course} />
