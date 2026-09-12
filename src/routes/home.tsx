@@ -130,8 +130,6 @@ function HomeScreen() {
                 action={<RetryButton onClick={() => featured.refetch()} />}
               />
             ) : null}
-            {featured.data ? (
-            ) : null}
             {featured.data?.courses.slice(0, 4).map((course) => (
               <CourseCard key={course.id} course={course} />
             ))}

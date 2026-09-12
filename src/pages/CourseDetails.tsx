@@ -59,7 +59,7 @@ export function CourseDetailsPage({ courseId }: { courseId: string }) {
   });
 
   const isEnrolled = Boolean(enrollment.data);
-  const chapters = detail?.chapters ?? [];
+  const subjectCount = detail?.subjectRefs.length ?? 0;
 
   return (
     <Screen>
@@ -219,7 +219,7 @@ export function CourseDetailsPage({ courseId }: { courseId: string }) {
             <div className="flex items-center gap-3">
               <div className="leading-tight">
                 <p className="text-[11px] text-muted-foreground">Enroll to unlock</p>
-                <p className="text-sm font-semibold">{chapters.length} chapters</p>
+                <p className="text-sm font-semibold">{subjectCount} subjects</p>
               </div>
               <button
                 type="button"
