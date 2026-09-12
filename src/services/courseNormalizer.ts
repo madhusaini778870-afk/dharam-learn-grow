@@ -168,9 +168,10 @@ export function compositeId(source: CourseSource, sourceCourseId: string): strin
 export function parseCompositeId(
   id: string,
 ): { source: CourseSource; sourceCourseId: string } | null {
-  const match = /^(s1|s2)-(.+)$/.exec(id);
+  const match = /^(s1|s2|pl)-(.+)$/.exec(id);
   if (!match) return null;
-  const source: CourseSource = match[1] === "s1" ? "source1" : "source2";
+  const source: CourseSource =
+    match[1] === "s1" ? "source1" : match[1] === "s2" ? "source2" : "listing";
   try {
     return { source, sourceCourseId: decodeURIComponent(match[2]!) };
   } catch {
