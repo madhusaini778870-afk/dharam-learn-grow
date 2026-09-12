@@ -21,17 +21,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      setLoading(false);
-    });
+    let unsubscribe: (() => void) | undefined;
 
-    supabase.auth.getSession().then(({ data: sessionData }) => {
-      setSession(sessionData.session);
-      setLoading(false);
-    });
+    try {
+      const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+        setSession(nextSession);
+        setLoading(false);
+      });
+      unsubscribe = () => data.subscription.unsubscribe();
 
-    return () => data.subscription.unsubscribe();
+      supabase.auth
+        .getSession()
+        .then(({ data: sessionData }) => {
+          setSession(sessionData.session);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          setLoading(false);
+        });
+    } catch (err) {
+      // Backend config missing at runtime: keep the app usable instead of blanking.
+      console.error(err);
+      setLoading(false);
+    }
+
+    return () => unsubscribe?.();
   }, []);
 
   return (
