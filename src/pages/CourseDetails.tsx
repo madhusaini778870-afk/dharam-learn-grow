@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { fetchCourseDetail } from "@/services/courseApi";
+import { fetchChapterContents, fetchChapters, fetchCourseDetail } from "@/services/courseApi";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Screen, PageHeader, LockIcon, ChevronRight, Footer } from "@/components/app-shell";
@@ -256,3 +256,155 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 export default CourseDetailsPage;
+
+function SubjectBlock({
+  courseId,
+  subject,
+  isEnrolled,
+}: {
+  courseId: string;
+  subject: { id: string; name: string; lectureCount: number | null; teachers: string[] };
+  isEnrolled: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [openChapter, setOpenChapter] = useState<string | null>(null);
+  const loadChapters = useServerFn(fetchChapters);
+
+  const chapters = useQuery({
+    queryKey: ["chapters", courseId, subject.id],
+    enabled: open,
+    queryFn: () => loadChapters({ data: { courseId, subjectId: subject.id } }),
+    retry: false,
+  });
+
+  const list = chapters.data?.status === "ok" ? chapters.data.chapters : [];
+
+  return (
+    <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center gap-2 text-left"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold leading-tight">{subject.name}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            {subject.lectureCount !== null ? `${subject.lectureCount} lectures` : "Chapters"}
+            {subject.teachers.length ? ` · ${subject.teachers.join(", ")}` : ""}
+          </p>
+        </div>
+        <ChevronRight
+          className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`}
+        />
+      </button>
+
+      {open ? (
+        <div className="mt-2.5 space-y-1.5">
+          {chapters.isLoading ? <ListSkeleton count={2} /> : null}
+          {chapters.isError || chapters.data?.status === "unavailable" ? (
+            <StateCard
+              tone="warn"
+              title="Chapters unavailable"
+              body="The chapter list couldn't be loaded right now."
+              action={<RetryButton onClick={() => chapters.refetch()} />}
+            />
+          ) : null}
+          {chapters.data?.status === "ok" && list.length === 0 ? (
+            <StateCard title="No chapters published" body="This subject has no published chapters." />
+          ) : null}
+          {list.map((chapter) =>
+            isEnrolled ? (
+              <div key={chapter.id} className="rounded-xl bg-background px-3 py-2.5">
+                <button
+                  type="button"
+                  onClick={() => setOpenChapter((value) => (value === chapter.id ? null : chapter.id))}
+                  className="flex w-full items-center gap-2 text-left"
+                >
+                  <span className="min-w-0 flex-1 text-[13px]">{chapter.title}</span>
+                  <span className="shrink-0 text-[10px] text-muted-foreground">
+                    {chapter.videoCount ?? 0} videos · {chapter.noteCount ?? 0} notes
+                  </span>
+                </button>
+                {openChapter === chapter.id ? (
+                  <ChapterContents courseId={courseId} subjectId={subject.id} chapterId={chapter.id} />
+                ) : null}
+              </div>
+            ) : (
+              <div
+                key={chapter.id}
+                className="flex items-center gap-2 rounded-xl bg-background/60 px-3 py-2.5 text-[13px] text-muted-foreground"
+              >
+                <LockIcon className="size-4 shrink-0 text-locked" />
+                <span className="min-w-0 flex-1 truncate">{chapter.title}</span>
+              </div>
+            ),
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ChapterContents({
+  courseId,
+  subjectId,
+  chapterId,
+}: {
+  courseId: string;
+  subjectId: string;
+  chapterId: string;
+}) {
+  const load = useServerFn(fetchChapterContents);
+  const contents = useQuery({
+    queryKey: ["contents", courseId, subjectId, chapterId],
+    queryFn: () => load({ data: { courseId, subjectId, chapterId } }),
+    retry: false,
+  });
+
+  if (contents.isLoading) return <div className="mt-2"><ListSkeleton count={1} /></div>;
+  if (contents.isError || contents.data?.status === "unavailable") {
+    return (
+      <p className="mt-2 text-[12px] text-muted-foreground">
+        Lessons couldn't be loaded for this chapter.
+      </p>
+    );
+  }
+  if (contents.data?.status !== "ok") return null;
+
+  const { lessons, notes } = contents.data;
+  if (lessons.length === 0 && notes.length === 0) {
+    return <p className="mt-2 text-[12px] text-muted-foreground">Nothing published in this chapter yet.</p>;
+  }
+
+  return (
+    <div className="mt-2 space-y-1.5">
+      {lessons.map((lesson) => (
+        <Link
+          key={lesson.id}
+          to="/lesson/$courseId/$lessonId"
+          params={{ courseId, lessonId: lesson.id }}
+          search={{ subjectId, chapterId }}
+          className="press flex items-center gap-2 rounded-lg bg-card px-3 py-2"
+        >
+          <span className="min-w-0 flex-1 truncate text-[12px]">{lesson.title}</span>
+          {lesson.videoUrl ? (
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.1em] text-pine">
+              Video
+            </span>
+          ) : null}
+        </Link>
+      ))}
+      {notes.map((note) => (
+        <a
+          key={note.id}
+          href={note.url}
+          target="_blank"
+          rel="noreferrer"
+          className="press block rounded-lg bg-card px-3 py-2 text-[12px]"
+        >
+          📄 {note.title}
+        </a>
+      ))}
+    </div>
+  );
+}
