@@ -192,10 +192,13 @@ export const searchCatalogCourses = createServerFn({ method: "GET" })
   .inputValidator((input: { q: string }) => ({ q: String(input?.q ?? "").slice(0, 120) }))
   .handler(async ({ data }): Promise<CatalogPayload> => {
     const [first, second] = await Promise.all([loadSource("source1"), loadSource("source2")]);
-    const courses = dedupeCourses([...first.courses, ...second.courses]).filter((course) =>
-      matchesQuery(course, data.q),
-    );
-    return { courses, sources: [first.state, second.state] };
+    const listing = loadListing();
+    const courses = dedupeCourses([
+      ...listing.courses,
+      ...first.courses,
+      ...second.courses,
+    ]).filter((course) => matchesQuery(course, data.q));
+    return { courses, sources: [listing.state, first.state, second.state] };
   });
 
 /** Course details for one course, resolved back to its own source. */
