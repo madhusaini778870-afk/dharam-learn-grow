@@ -15,8 +15,10 @@ import { Route as BooksRouteImport } from './routes/books'
 import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as DoubtSolverRouteImport } from './routes/doubt-solver'
 import { Route as HomeRouteImport } from './routes/home'
+import { Route as JeeRouteImport } from './routes/jee'
 import { Route as LiveRouteImport } from './routes/live'
 import { Route as MyLearningRouteImport } from './routes/my-learning'
+import { Route as NeetRouteImport } from './routes/neet'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as CourseCourseIdRouteImport } from './routes/course.$courseId'
@@ -53,6 +55,11 @@ const HomeRoute = HomeRouteImport.update({
   path: '/home',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JeeRoute = JeeRouteImport.update({
+  id: '/jee',
+  path: '/jee',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LiveRoute = LiveRouteImport.update({
   id: '/live',
   path: '/live',
@@ -61,6 +68,11 @@ const LiveRoute = LiveRouteImport.update({
 const MyLearningRoute = MyLearningRouteImport.update({
   id: '/my-learning',
   path: '/my-learning',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NeetRoute = NeetRouteImport.update({
+  id: '/neet',
+  path: '/neet',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -96,8 +108,10 @@ export interface FileRoutesByFullPath {
   '/courses': typeof CoursesRoute
   '/doubt-solver': typeof DoubtSolverRoute
   '/home': typeof HomeRoute
+  '/jee': typeof JeeRoute
   '/live': typeof LiveRoute
   '/my-learning': typeof MyLearningRoute
+  '/neet': typeof NeetRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/course/$courseId': typeof CourseCourseIdRoute
@@ -111,8 +125,10 @@ export interface FileRoutesByTo {
   '/courses': typeof CoursesRoute
   '/doubt-solver': typeof DoubtSolverRoute
   '/home': typeof HomeRoute
+  '/jee': typeof JeeRoute
   '/live': typeof LiveRoute
   '/my-learning': typeof MyLearningRoute
+  '/neet': typeof NeetRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/course/$courseId': typeof CourseCourseIdRoute
@@ -127,8 +143,10 @@ export interface FileRoutesById {
   '/courses': typeof CoursesRoute
   '/doubt-solver': typeof DoubtSolverRoute
   '/home': typeof HomeRoute
+  '/jee': typeof JeeRoute
   '/live': typeof LiveRoute
   '/my-learning': typeof MyLearningRoute
+  '/neet': typeof NeetRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/course/$courseId': typeof CourseCourseIdRoute
@@ -144,8 +162,10 @@ export interface FileRouteTypes {
     | '/courses'
     | '/doubt-solver'
     | '/home'
+    | '/jee'
     | '/live'
     | '/my-learning'
+    | '/neet'
     | '/profile'
     | '/search'
     | '/course/$courseId'
@@ -159,8 +179,10 @@ export interface FileRouteTypes {
     | '/courses'
     | '/doubt-solver'
     | '/home'
+    | '/jee'
     | '/live'
     | '/my-learning'
+    | '/neet'
     | '/profile'
     | '/search'
     | '/course/$courseId'
@@ -174,8 +196,10 @@ export interface FileRouteTypes {
     | '/courses'
     | '/doubt-solver'
     | '/home'
+    | '/jee'
     | '/live'
     | '/my-learning'
+    | '/neet'
     | '/profile'
     | '/search'
     | '/course/$courseId'
@@ -190,8 +214,10 @@ export interface RootRouteChildren {
   CoursesRoute: typeof CoursesRoute
   DoubtSolverRoute: typeof DoubtSolverRoute
   HomeRoute: typeof HomeRoute
+  JeeRoute: typeof JeeRoute
   LiveRoute: typeof LiveRoute
   MyLearningRoute: typeof MyLearningRoute
+  NeetRoute: typeof NeetRoute
   ProfileRoute: typeof ProfileRoute
   SearchRoute: typeof SearchRoute
   CourseCourseIdRoute: typeof CourseCourseIdRoute
@@ -243,6 +269,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HomeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/jee': {
+      id: '/jee'
+      path: '/jee'
+      fullPath: '/jee'
+      preLoaderRoute: typeof JeeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/live': {
       id: '/live'
       path: '/live'
@@ -255,6 +288,13 @@ declare module '@tanstack/react-router' {
       path: '/my-learning'
       fullPath: '/my-learning'
       preLoaderRoute: typeof MyLearningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/neet': {
+      id: '/neet'
+      path: '/neet'
+      fullPath: '/neet'
+      preLoaderRoute: typeof NeetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -302,8 +342,10 @@ const rootRouteChildren: RootRouteChildren = {
   CoursesRoute: CoursesRoute,
   DoubtSolverRoute: DoubtSolverRoute,
   HomeRoute: HomeRoute,
+  JeeRoute: JeeRoute,
   LiveRoute: LiveRoute,
   MyLearningRoute: MyLearningRoute,
+  NeetRoute: NeetRoute,
   ProfileRoute: ProfileRoute,
   SearchRoute: SearchRoute,
   CourseCourseIdRoute: CourseCourseIdRoute,

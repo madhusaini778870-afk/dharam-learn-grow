@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { fetchCourseDetail } from "@/services/courseApi";
+import { fetchChapterContents, fetchCourseDetail } from "@/services/courseApi";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { ChevronLeft, SparkIcon } from "@/components/app-shell";
@@ -10,7 +10,13 @@ import { ListSkeleton, RetryButton, StateCard } from "@/components/states";
 import { DoubtSolverSheet } from "@/components/doubt-solver";
 import lessonBackdrop from "@/assets/lesson-backdrop.jpg";
 
+type LessonSearch = { subjectId: string; chapterId: string };
+
 export const Route = createFileRoute("/lesson/$courseId/$lessonId")({
+  validateSearch: (search: Record<string, unknown>): LessonSearch => ({
+    subjectId: String(search["subjectId"] ?? ""),
+    chapterId: String(search["chapterId"] ?? ""),
+  }),
   head: () => ({
     meta: [
       { title: "Video lesson · Dharam Bhai Study" },
@@ -27,6 +33,7 @@ export const Route = createFileRoute("/lesson/$courseId/$lessonId")({
 
 function LessonScreen() {
   const { courseId, lessonId } = Route.useParams();
+  const { subjectId, chapterId } = Route.useSearch();
   const { session, loading, user } = useAuth();
   const navigate = useNavigate();
   const fetchCourse = useServerFn(fetchCourseDetail);
@@ -57,10 +64,20 @@ function LessonScreen() {
     },
   });
 
+  const loadContents = useServerFn(fetchChapterContents);
+  const contents = useQuery({
+    queryKey: ["contents", courseId, subjectId, chapterId],
+    enabled: Boolean(subjectId && chapterId),
+    queryFn: () => loadContents({ data: { courseId, subjectId, chapterId } }),
+    retry: false,
+  });
+
   const detail = course.data?.status === "ok" ? course.data.course : null;
-  const chapter = detail?.chapters?.find((item) => item.lessons?.some((l) => l.id === lessonId));
-  const lesson = chapter?.lessons?.find((l) => l.id === lessonId) ??
-    detail?.lessons.find((l) => l.id === lessonId);
+  const chapter = null;
+  const lesson =
+    contents.data?.status === "ok"
+      ? contents.data.lessons.find((item) => item.id === lessonId) ?? null
+      : null;
   const isEnrolled = Boolean(enrollment.data);
 
   async function saveProgress() {
@@ -114,7 +131,13 @@ function LessonScreen() {
           </div>
         ) : null}
 
-        {detail && !lesson ? (
+        {contents.isLoading ? (
+          <div className="px-5">
+            <ListSkeleton count={1} />
+          </div>
+        ) : null}
+
+        {detail && !lesson && !contents.isLoading ? (
           <div className="px-5">
             <div className="rounded-3xl bg-paper/5 px-6 py-8 text-center ring-1 ring-paper/10">
               <p className="font-display text-lg">Lesson not found</p>
@@ -146,7 +169,15 @@ function LessonScreen() {
         {lesson && isEnrolled ? (
           <>
             <div className="relative aspect-video w-full overflow-hidden bg-black">
-              {lesson.videoUrl ? (
+              {lesson.videoUrl && /youtube\.com|youtu\.be/.test(lesson.videoUrl) ? (
+                <iframe
+                  src={lesson.videoUrl}
+                  title={lesson.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                  className="size-full"
+                />
+              ) : lesson.videoUrl ? (
                 <video
                   ref={videoRef}
                   src={lesson.videoUrl}
@@ -177,7 +208,7 @@ function LessonScreen() {
             </div>
 
             <div className="px-5 pt-5">
-              <p className="text-xs text-paper/50">{chapter?.title}</p>
+              
               <h1 className="mt-1.5 font-display text-2xl leading-tight text-balance">{lesson.title}</h1>
               {lesson.durationSeconds ? (
                 <p className="mt-1 text-xs text-paper/40">
