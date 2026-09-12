@@ -68,6 +68,10 @@ export type NormalizedCourse = {
   sourceCourseId: string;
   source: CourseSource;
   sourceLabel: string;
+  /** Public page this course is listed on, when one is actually available. */
+  sourceUrl?: string | null;
+  /** Short note about what that public page is. */
+  sourceNote?: string | null;
   title: string;
   thumbnail: string | null;
   description: string | null;
