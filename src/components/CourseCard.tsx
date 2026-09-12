@@ -73,7 +73,27 @@ export function CourseCard({
           )}
         </div>
       </div>
-    </Link>
+
+      <div className="mt-3 flex items-center gap-2">
+        <Link
+          to="/course/$courseId"
+          params={{ courseId: course.id }}
+          className="press flex-1 rounded-2xl bg-foreground py-2.5 text-center text-[13px] font-semibold text-background"
+        >
+          View Course
+        </Link>
+        {course.sourceUrl ? (
+          <a
+            href={course.sourceUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="press rounded-2xl bg-background px-3.5 py-2.5 text-[12px] font-semibold text-muted-foreground ring-1 ring-border"
+          >
+            {course.sourceNote ?? "Public source"}
+          </a>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
