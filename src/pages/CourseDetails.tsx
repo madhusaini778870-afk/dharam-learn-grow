@@ -125,6 +125,17 @@ export function CourseDetailsPage({ courseId }: { courseId: string }) {
               </p>
             ) : null}
 
+            {detail.sourceUrl ? (
+              <a
+                href={detail.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="press mt-3 inline-flex rounded-2xl bg-card px-4 py-2.5 text-[12px] font-semibold ring-1 ring-border"
+              >
+                {detail.sourceNote ?? "Public source"} ↗
+              </a>
+            ) : null}
+
             <div className="mt-4 grid grid-cols-4 gap-2">
               <Stat value={String(detail.subjects.length)} label="Subjects" />
               <Stat value={String(chapters.length)} label="Chapters" />

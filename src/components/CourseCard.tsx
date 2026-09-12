@@ -9,16 +9,16 @@ export function CourseCard({
   course: NormalizedCourse;
   enrolled?: boolean;
 }) {
-  const chips = [course.category, course.className, ...course.subjects.slice(0, 2)].filter(
-    (chip): chip is string => Boolean(chip),
+  const chips = Array.from(
+    new Set(
+      [course.category, course.className, ...course.subjects.slice(0, 2)].filter(
+        (chip): chip is string => Boolean(chip),
+      ),
+    ),
   );
 
   return (
-    <Link
-      to="/course/$courseId"
-      params={{ courseId: course.id }}
-      className="press animate-rise block rounded-3xl bg-card p-3 ring-1 ring-border"
-    >
+    <div className="animate-rise rounded-3xl bg-card p-3 ring-1 ring-border">
       <div className="flex gap-3">
         {course.thumbnail ? (
           <img
@@ -77,7 +77,27 @@ export function CourseCard({
           )}
         </div>
       </div>
-    </Link>
+
+      <div className="mt-3 flex items-center gap-2">
+        <Link
+          to="/course/$courseId"
+          params={{ courseId: course.id }}
+          className="press flex-1 rounded-2xl bg-foreground py-2.5 text-center text-[13px] font-semibold text-background"
+        >
+          View Course
+        </Link>
+        {course.sourceUrl ? (
+          <a
+            href={course.sourceUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="press rounded-2xl bg-background px-3.5 py-2.5 text-[12px] font-semibold text-muted-foreground ring-1 ring-border"
+          >
+            {course.sourceNote ?? "Public source"}
+          </a>
+        ) : null}
+      </div>
+    </div>
   );
 }
 

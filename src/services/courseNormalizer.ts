@@ -6,12 +6,19 @@
  * or left null/empty.
  */
 
-export type CourseSource = "source1" | "source2";
+export type CourseSource = "source1" | "source2" | "listing";
 
 export const SOURCE_LABEL: Record<CourseSource, string> = {
   source1: "Source 1",
   source2: "Source 2",
+  listing: "Public listing",
 };
+
+/** Public listing page the owner supplied. Never deep-linked into. */
+export const LISTING_SOURCE_URL = "https://www.pwmarco.site/study/batches";
+
+/** Public YouTube channel supplied by the owner. */
+export const YOUTUBE_CHANNEL_URL = "https://youtube.com/@pw-jeewallah";
 
 export type Category =
   | "JEE"
@@ -61,6 +68,10 @@ export type NormalizedCourse = {
   sourceCourseId: string;
   source: CourseSource;
   sourceLabel: string;
+  /** Public page this course is listed on, when one is actually available. */
+  sourceUrl?: string | null;
+  /** Short note about what that public page is. */
+  sourceNote?: string | null;
   title: string;
   thumbnail: string | null;
   description: string | null;
@@ -148,7 +159,7 @@ export function deriveCategory(raw: Raw, className: string | null, exam: string 
 
 /* ---------------------------------- ids ----------------------------------- */
 
-const PREFIX: Record<CourseSource, string> = { source1: "s1", source2: "s2" };
+const PREFIX: Record<CourseSource, string> = { source1: "s1", source2: "s2", listing: "pl" };
 
 export function compositeId(source: CourseSource, sourceCourseId: string): string {
   return `${PREFIX[source]}-${encodeURIComponent(sourceCourseId)}`;
@@ -157,9 +168,10 @@ export function compositeId(source: CourseSource, sourceCourseId: string): strin
 export function parseCompositeId(
   id: string,
 ): { source: CourseSource; sourceCourseId: string } | null {
-  const match = /^(s1|s2)-(.+)$/.exec(id);
+  const match = /^(s1|s2|pl)-(.+)$/.exec(id);
   if (!match) return null;
-  const source: CourseSource = match[1] === "s1" ? "source1" : "source2";
+  const source: CourseSource =
+    match[1] === "s1" ? "source1" : match[1] === "s2" ? "source2" : "listing";
   try {
     return { source, sourceCourseId: decodeURIComponent(match[2]!) };
   } catch {
