@@ -14,11 +14,7 @@ export function CourseCard({
   );
 
   return (
-    <Link
-      to="/course/$courseId"
-      params={{ courseId: course.id }}
-      className="press animate-rise block rounded-3xl bg-card p-3 ring-1 ring-border"
-    >
+    <div className="animate-rise rounded-3xl bg-card p-3 ring-1 ring-border">
       <div className="flex gap-3">
         {course.thumbnail ? (
           <img
