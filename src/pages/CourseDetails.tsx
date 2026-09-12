@@ -136,81 +136,33 @@ export function CourseDetailsPage({ courseId }: { courseId: string }) {
               </a>
             ) : null}
 
-            <div className="mt-4 grid grid-cols-4 gap-2">
+            <div className="mt-4 grid grid-cols-3 gap-2">
               <Stat value={String(detail.subjects.length)} label="Subjects" />
-              <Stat value={String(chapters.length)} label="Chapters" />
-              <Stat value={String(detail.lessons.length)} label="Lessons" />
-              <Stat value={String(detail.notes.length)} label="Notes" />
+              <Stat
+                value={String(
+                  detail.subjectRefs.reduce((total, item) => total + (item.lectureCount ?? 0), 0),
+                )}
+                label="Lectures"
+              />
+              <Stat value={detail.language ?? "—"} label="Language" />
             </div>
 
-            {detail.subjects.length ? (
-              <>
-                <SectionTitle>Subjects</SectionTitle>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {detail.subjects.map((subject) => (
-                    <span
-                      key={subject}
-                      className="rounded-full bg-card px-3 py-1.5 text-[12px] font-medium ring-1 ring-border"
-                    >
-                      {subject}
-                    </span>
-                  ))}
-                </div>
-              </>
-            ) : null}
-
-            <SectionTitle>Chapters &amp; lessons</SectionTitle>
+            <SectionTitle>Subjects, chapters &amp; lessons</SectionTitle>
             <div className="mt-2.5 space-y-2.5">
-              {chapters.length === 0 ? (
+              {detail.subjectRefs.length === 0 ? (
                 <StateCard
-                  title="No chapters provided"
-                  body="This source did not include chapter data for this course."
+                  title="No subjects published"
+                  body="The public source did not include subject data for this course."
                 />
               ) : null}
-              {chapters.map((chapter) =>
-                isEnrolled ? (
-                  <div key={chapter.id} className="rounded-2xl bg-card p-3 ring-1 ring-border">
-                    <p className="text-sm font-medium leading-tight">{chapter.title}</p>
-                    <div className="mt-2 space-y-1.5">
-                      {chapter.lessons.map((lesson) => (
-                        <Link
-                          key={lesson.id}
-                          to="/lesson/$courseId/$lessonId"
-                          params={{ courseId: detail.id, lessonId: lesson.id }}
-                          className="press flex items-center gap-2 rounded-xl bg-background px-3 py-2.5"
-                        >
-                          <span className="min-w-0 flex-1 truncate text-[13px]">{lesson.title}</span>
-                          {lesson.videoUrl ? (
-                            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.1em] text-pine">
-                              Video
-                            </span>
-                          ) : null}
-                          <ChevronRight className="size-4 text-muted-foreground" />
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    key={chapter.id}
-                    className="flex items-center gap-3 rounded-2xl bg-card/60 p-3 ring-1 ring-border"
-                  >
-                    <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-foreground/5 text-locked">
-                      <LockIcon className="size-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium leading-tight text-muted-foreground">
-                        {chapter.title}
-                      </p>
-                      {chapter.lessons.length ? (
-                        <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          {chapter.lessons.length} lessons
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-                ),
-              )}
+              {detail.subjectRefs.map((subject) => (
+                <SubjectBlock
+                  key={subject.id}
+                  courseId={detail.id}
+                  subject={subject}
+                  isEnrolled={isEnrolled}
+                />
+              ))}
             </div>
 
             {detail.notes.length ? (

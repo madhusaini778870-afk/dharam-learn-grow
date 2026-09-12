@@ -1,10 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { listNotes } from "@/lib/catalog.functions";
-import { Screen, Footer, PageHeader, DocIcon, CloseIcon } from "@/components/app-shell";
-import { ListSkeleton, RetryButton, StateCard } from "@/components/states";
+import { fetchCourseDetail } from "@/services/courseApi";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Screen, Footer, PageHeader, ChevronRight } from "@/components/app-shell";
+import { ListSkeleton, StateCard } from "@/components/states";
 
 export const Route = createFileRoute("/books")({
   head: () => ({
@@ -12,97 +13,94 @@ export const Route = createFileRoute("/books")({
       { title: "Books & Notes · Dharam Bhai Study" },
       {
         name: "description",
-        content: "Read authorized JEE and NEET study notes and PDFs inside Dharam Bhai Study.",
+        content: "Publicly available notes and PDFs published with the courses you are enrolled in.",
       },
       { property: "og:title", content: "Books & Notes · Dharam Bhai Study" },
-      { property: "og:description", content: "Authorized JEE and NEET study notes and PDFs." },
+      { property: "og:description", content: "Notes and PDFs from your enrolled courses." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: BooksScreen,
 });
 
 function BooksScreen() {
-  const fetchNotes = useServerFn(listNotes);
-  const [openPdf, setOpenPdf] = useState<{ title: string; url: string } | null>(null);
+  const { user } = useAuth();
 
-  const notes = useQuery({
-    queryKey: ["notes"],
-    queryFn: () => fetchNotes(),
-    retry: false,
+  const enrollments = useQuery({
+    queryKey: ["enrollments", user?.id],
+    enabled: Boolean(user?.id),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("enrollments")
+        .select("course_id, course_title")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
   });
 
   return (
     <Screen>
-      <PageHeader title="Books & Notes" subtitle="Authorized notes and PDFs only" />
-
+      <PageHeader title="Books & Notes" subtitle="Notes published with your enrolled courses" />
       <div className="mt-4 space-y-3 px-5">
-        {notes.isLoading ? <ListSkeleton count={3} /> : null}
-        {notes.isError ? (
+        {enrollments.isLoading ? <ListSkeleton count={2} /> : null}
+        {enrollments.data && enrollments.data.length === 0 ? (
           <StateCard
-            title="Network error"
-            body="The notes request failed. Check your connection and try again."
-            action={<RetryButton onClick={() => notes.refetch()} />}
+            title="No notes yet"
+            body="Enroll in a course to open the notes and PDFs published inside its chapters."
+            action={
+              <Link
+                to="/courses"
+                className="press inline-flex rounded-2xl bg-primary px-4 py-2.5 text-[13px] font-semibold text-primary-foreground"
+              >
+                Browse courses
+              </Link>
+            }
           />
         ) : null}
-        {notes.data?.status === "unavailable" ? (
-          <StateCard
-            tone="warn"
-            title="Notes unavailable"
-            body="No authorized notes source is connected, so no notes can be shown."
-            action={<RetryButton onClick={() => notes.refetch()} />}
-          />
-        ) : null}
-        {notes.data?.status === "ok" && notes.data.data.length === 0 ? (
-          <StateCard title="No notes published" body="The authorized source returned no notes." />
-        ) : null}
-        {notes.data?.status === "ok"
-          ? notes.data.data.map((note) => (
-              <div key={note.id} className="rounded-3xl bg-card p-4 ring-1 ring-border">
-                <div className="flex items-center gap-3">
-                  <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-pine/12 text-pine">
-                    <DocIcon className="size-5" />
-                  </div>
-                  <p className="min-w-0 flex-1 font-display text-[16px] leading-tight">{note.title}</p>
-                </div>
-                <div className="mt-3 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setOpenPdf({ title: note.title, url: note.url })}
-                    className="press flex-1 rounded-xl bg-foreground py-2.5 text-[12px] font-semibold text-background"
-                  >
-                    Read in app
-                  </button>
-                  <a
-                    href={note.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="press rounded-xl bg-background px-4 py-2.5 text-[12px] font-semibold ring-1 ring-border"
-                  >
-                    Open
-                  </a>
-                </div>
-              </div>
-            ))
-          : null}
+        {enrollments.data?.map((row) => (
+          <CourseNotes key={row.course_id} courseId={row.course_id} title={row.course_title} />
+        ))}
       </div>
-
-      {openPdf ? (
-        <div className="fixed inset-0 z-50 flex flex-col bg-night">
-          <div className="flex items-center gap-3 px-5 py-4">
-            <p className="min-w-0 flex-1 truncate text-sm font-semibold text-paper">{openPdf.title}</p>
-            <button
-              type="button"
-              onClick={() => setOpenPdf(null)}
-              aria-label="Close reader"
-              className="grid size-8 place-items-center rounded-full bg-paper/10 text-paper"
-            >
-              <CloseIcon className="size-4" />
-            </button>
-          </div>
-          <iframe title={openPdf.title} src={openPdf.url} className="flex-1 bg-paper" />
-        </div>
-      ) : null}
       <Footer />
     </Screen>
+  );
+}
+
+function CourseNotes({ courseId, title }: { courseId: string; title: string }) {
+  const load = useServerFn(fetchCourseDetail);
+  const course = useQuery({
+    queryKey: ["course", courseId],
+    queryFn: () => load({ data: { courseId } }),
+    retry: false,
+  });
+  const detail = course.data?.status === "ok" ? course.data.course : null;
+
+  return (
+    <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border">
+      <p className="text-sm font-semibold leading-tight">{title}</p>
+      <div className="mt-2 space-y-1.5">
+        {detail?.notes.map((note) => (
+          <a
+            key={note.id}
+            href={note.url}
+            target="_blank"
+            rel="noreferrer"
+            className="press block rounded-xl bg-background px-3 py-2.5 text-[13px]"
+          >
+            {note.title}
+          </a>
+        ))}
+        <Link
+          to="/course/$courseId"
+          params={{ courseId }}
+          className="press flex items-center gap-2 rounded-xl bg-background px-3 py-2.5 text-[13px]"
+        >
+          <span className="flex-1">Chapter notes &amp; PDFs</span>
+          <ChevronRight className="size-4 text-muted-foreground" />
+        </Link>
+      </div>
+    </div>
   );
 }

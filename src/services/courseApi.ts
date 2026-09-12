@@ -1,257 +1,498 @@
 import { createServerFn } from "@tanstack/react-start";
 import {
   compositeId,
-  dedupeCourses,
-  matchesQuery,
-  normalizeCourse,
-  normalizeCourseList,
   parseCompositeId,
+  plainText,
+  categoryFor,
   SOURCE_LABEL,
-  type CourseSource,
+  type Category,
+  type NormalizedChapter,
   type NormalizedCourse,
+  type NormalizedLesson,
+  type NormalizedNote,
+  type SubjectRef,
 } from "./courseNormalizer";
-import { listedBatches } from "./publicBatches";
 
 /**
- * Combined course catalog for both authorized sources.
+ * Course data for Dharam Bhai Study.
  *
- * Endpoints are never invented and never hardcoded to a protected page: each
- * source reads its base URL (and optional secret key) from server-side env vars.
- * When a source has no configured authorized endpoint, it is reported as
- * "API not configured" — no placeholder or fake courses are ever produced.
+ * Everything is read from the publicly accessible endpoints of the source site
+ * (no login, no payment wall, no protected content, nothing invented):
+ *   - batch list  : public server endpoint used by its own public /batches page
+ *   - batch detail: GET /api/content/v3/batches/:batchId/details
+ *   - chapters    : GET /api/content/v2/batches/:batchId/subject/:subjectId/topics
+ *   - lectures    : GET /api/content/v2/batches/:id/subject/:sid/contents?...
+ *   - live today  : GET /api/content/v2/batches/:batchId/todays-schedule
  *
- * Server env vars (never exposed to the browser):
- *   SOURCE1_API_BASE_URL / SOURCE1_API_KEY / SOURCE1_COURSES_PATH
- *   SOURCE2_API_BASE_URL / SOURCE2_API_KEY / SOURCE2_COURSES_PATH
+ * Base URL and list-function id are overridable with server-side env vars and
+ * are never exposed to the browser.
  */
 
+const DEFAULT_BASE = "https://physicswallahx.vercel.app";
+const DEFAULT_LIST_FN = "dcdd884992863281da512f5f2bd74792beaca0ccee0911be66efc30e089df11f";
+
+function base(): string {
+  return (process.env["SOURCE_SITE_URL"] ?? DEFAULT_BASE).replace(/\/$/, "");
+}
+
+function listFn(): string {
+  return process.env["SOURCE_LIST_FN"] ?? DEFAULT_LIST_FN;
+}
+
+function headers(): Record<string, string> {
+  return {
+    accept: "application/x-tss-framed, application/x-ndjson, application/json",
+    "x-tsr-serverfn": "true",
+    referer: `${base()}/batches`,
+    "user-agent": "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/141 Mobile Safari/537.36",
+  };
+}
+
 export type SourceState = {
-  source: CourseSource;
   label: string;
-  status: "ok" | "not_configured" | "error";
+  status: "ok" | "error";
   message: string | null;
   count: number;
 };
 
-export type CatalogPayload = {
+export type CoursePage = {
   courses: NormalizedCourse[];
-  sources: SourceState[];
+  nextCursor: number | null;
+  state: SourceState;
 };
 
 export type CourseDetailResult =
   | { status: "ok"; course: NormalizedCourse }
   | { status: "unavailable"; reason: string };
 
-const NOT_CONFIGURED =
-  "API not configured — an authorized course endpoint for this source has not been provided yet.";
+const UNREACHABLE = "The public course source could not be reached right now.";
 
-const MAX_PAGES = 40;
+/* ------------------------------ framed decode ------------------------------ */
 
-function config(source: CourseSource) {
-  const prefix = source === "source1" ? "SOURCE1" : "SOURCE2";
-  const base =
-    process.env[`${prefix}_API_BASE_URL`] ??
-    (source === "source1" ? process.env["CATALOG_API_BASE_URL"] : undefined);
-  return {
-    base: base ? base.replace(/\/$/, "") : null,
-    key: process.env[`${prefix}_API_KEY`] ?? null,
-    path:
-      process.env[`${prefix}_COURSES_PATH`] ?? (source === "source1" ? "/courses" : "/batches"),
-  };
+type Framed = { t: number; s?: unknown; a?: Framed[]; p?: { k: string[]; v: Framed[] } };
+
+function decodeFramed(node: Framed | null | undefined): unknown {
+  if (!node) return null;
+  switch (node.t) {
+    case 9:
+      return (node.a ?? []).map((child) => decodeFramed(child));
+    case 10: {
+      const out: Record<string, unknown> = {};
+      const keys = node.p?.k ?? [];
+      const values = node.p?.v ?? [];
+      keys.forEach((key, index) => {
+        out[key] = decodeFramed(values[index]);
+      });
+      return out;
+    }
+    default:
+      return node.s ?? null;
+  }
 }
 
-async function readJson(
-  url: string,
-  key: string | null,
-): Promise<{ ok: true; payload: unknown } | { ok: false; message: string }> {
+/* --------------------------------- fetchers -------------------------------- */
+
+/** Public JSON proxy on the source site: { success, data }. */
+async function content<T>(path: string): Promise<T | null> {
   try {
-    const response = await fetch(url, {
-      headers: {
-        accept: "application/json",
-        ...(key ? { authorization: `Bearer ${key}` } : {}),
-      },
-    });
-    if (!response.ok) {
-      return { ok: false, message: `The source responded with status ${response.status}.` };
-    }
-    const contentType = response.headers.get("content-type") ?? "";
-    if (!contentType.includes("json")) {
-      return { ok: false, message: "The source did not return course data in a readable format." };
-    }
-    return { ok: true, payload: (await response.json()) as unknown };
+    const response = await fetch(`${base()}/api/content/${path}`, { headers: headers() });
+    if (!response.ok) return null;
+    const payload = (await response.json()) as { success?: boolean; data?: T } | null;
+    if (!payload || payload.success === false) return null;
+    return (payload.data ?? null) as T | null;
   } catch {
-    return { ok: false, message: "The source could not be reached." };
+    return null;
   }
 }
 
-function itemsOf(payload: unknown): unknown[] {
-  if (Array.isArray(payload)) return payload;
-  const record = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : null;
-  if (!record) return [];
-  for (const key of ["courses", "batches", "data", "items", "results", "docs"]) {
-    const value = record[key];
-    if (Array.isArray(value)) return value;
-    const nested = value && typeof value === "object" ? (value as Record<string, unknown>) : null;
-    if (nested) {
-      for (const inner of ["courses", "batches", "items", "results", "docs"]) {
-        if (Array.isArray(nested[inner])) return nested[inner] as unknown[];
-      }
-    }
-  }
-  return [];
-}
+type RawBatch = {
+  batchId?: string;
+  id?: string;
+  name?: string;
+  photo?: string | null;
+  exam?: string | null;
+  className?: string | null;
+  language?: string | null;
+  startDate?: string | null;
+};
 
-function hasMore(payload: unknown, received: number): boolean {
-  const record = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : null;
-  if (record) {
-    for (const key of ["hasMore", "has_more", "hasNextPage", "next"]) {
-      const value = record[key];
-      if (typeof value === "boolean") return value;
-      if (typeof value === "string" && value) return true;
-    }
-  }
-  // No explicit flag: keep paging while pages come back full.
-  return received >= 20;
-}
-
-/** Loads every available page from one source. */
-async function loadSource(
-  source: CourseSource,
-): Promise<{ courses: NormalizedCourse[]; state: SourceState }> {
-  const { base, key, path } = config(source);
-  const label = SOURCE_LABEL[source];
-
-  if (!base) {
-    return {
-      courses: [],
-      state: { source, label, status: "not_configured", message: NOT_CONFIGURED, count: 0 },
-    };
-  }
-
-  const collected: NormalizedCourse[] = [];
-  let firstError: string | null = null;
-
-  for (let page = 1; page <= MAX_PAGES; page += 1) {
-    const url = `${base}${path}${path.includes("?") ? "&" : "?"}page=${page}&limit=50`;
-    const result = await readJson(url, key);
-    if (!result.ok) {
-      if (page === 1) firstError = result.message;
-      break;
-    }
-    const items = itemsOf(result.payload);
-    if (items.length === 0) break;
-    collected.push(...normalizeCourseList(items, source));
-    if (!hasMore(result.payload, items.length)) break;
-  }
-
-  if (firstError) {
-    return {
-      courses: [],
-      state: { source, label, status: "error", message: firstError, count: 0 },
-    };
-  }
-
-  const unique = new Map(collected.map((course) => [course.id, course]));
-  const courses = Array.from(unique.values());
-  return {
-    courses,
-    state: { source, label, status: "ok", message: null, count: courses.length },
-  };
-}
-
-/** Publicly listed batches supplied by the app owner (no API needed). */
-function loadListing(): { courses: NormalizedCourse[]; state: SourceState } {
-  const courses = listedBatches();
-  return {
-    courses,
-    state: {
-      source: "listing",
-      label: SOURCE_LABEL.listing,
-      status: "ok",
-      message: "Publicly listed batches. Links open the public listing page only.",
-      count: courses.length,
+/** One page of the public batch list. */
+async function listPage(
+  q: string,
+  page: number,
+  pageSize: number,
+): Promise<{ items: RawBatch[]; hasMore: boolean } | null> {
+  const payload = JSON.stringify({
+    t: {
+      t: 10,
+      i: 0,
+      p: {
+        k: ["data"],
+        v: [
+          {
+            t: 10,
+            i: 1,
+            p: {
+              k: ["q", "page", "pageSize"],
+              v: [
+                { t: 1, s: q },
+                { t: 0, s: page },
+                { t: 0, s: pageSize },
+              ],
+            },
+            o: 0,
+          },
+        ],
+      },
+      o: 0,
     },
-  };
-}
-
-/** Complete combined catalog: all pages from both sources, duplicates removed. */
-export const fetchCatalog = createServerFn({ method: "GET" }).handler(
-  async (): Promise<CatalogPayload> => {
-    const [first, second] = await Promise.all([loadSource("source1"), loadSource("source2")]);
-    const listing = loadListing();
-    const courses = dedupeCourses([
-      ...listing.courses,
-      ...first.courses,
-      ...second.courses,
-    ]).sort((a, b) => a.title.localeCompare(b.title));
-    return { courses, sources: [listing.state, first.state, second.state] };
-  },
-);
-
-/** Search across the complete combined catalog. */
-export const searchCatalogCourses = createServerFn({ method: "GET" })
-  .inputValidator((input: { q: string }) => ({ q: String(input?.q ?? "").slice(0, 120) }))
-  .handler(async ({ data }): Promise<CatalogPayload> => {
-    const [first, second] = await Promise.all([loadSource("source1"), loadSource("source2")]);
-    const listing = loadListing();
-    const courses = dedupeCourses([
-      ...listing.courses,
-      ...first.courses,
-      ...second.courses,
-    ]).filter((course) => matchesQuery(course, data.q));
-    return { courses, sources: [listing.state, first.state, second.state] };
+    f: 63,
+    m: [],
   });
 
-/** Course details for one course, resolved back to its own source. */
+  try {
+    const response = await fetch(
+      `${base()}/_serverFn/${listFn()}?payload=${encodeURIComponent(payload)}`,
+      { headers: headers() },
+    );
+    if (!response.ok) return null;
+    const decoded = decodeFramed((await response.json()) as Framed) as {
+      result?: { items?: RawBatch[]; hasMore?: boolean };
+    } | null;
+    const result = decoded?.result;
+    if (!result || !Array.isArray(result.items)) return null;
+    return { items: result.items, hasMore: Boolean(result.hasMore) };
+  } catch {
+    return null;
+  }
+}
+
+/* -------------------------------- normalize -------------------------------- */
+
+function fromListItem(raw: RawBatch): NormalizedCourse | null {
+  const sourceCourseId = raw.batchId ?? raw.id;
+  const title = raw.name?.trim();
+  if (!sourceCourseId || !title) return null;
+  const className = raw.className ? `Class ${raw.className}` : null;
+  return {
+    id: compositeId("source1", sourceCourseId),
+    sourceCourseId,
+    source: "source1",
+    sourceLabel: SOURCE_LABEL.source1,
+    sourceUrl: `${base()}/batch/${sourceCourseId}`,
+    sourceNote: "Public course page",
+    title,
+    thumbnail: raw.photo ?? null,
+    description: null,
+    category: categoryFor(raw.exam ?? null, raw.className ?? null),
+    className,
+    exam: raw.exam ? raw.exam.replace(/_/g, " ") : null,
+    language: raw.language ?? null,
+    startDate: raw.startDate ?? null,
+    subjects: [],
+    subjectRefs: [],
+    teachers: [],
+    chapters: [],
+    lessons: [],
+    videos: [],
+    notes: [],
+  };
+}
+
+type RawSubject = {
+  _id?: string;
+  subject?: string;
+  lectureCount?: number;
+  teacherIds?: { firstName?: string; lastName?: string; name?: string }[];
+};
+
+function teacherName(entry: RawSubject["teacherIds"] extends (infer T)[] ? T : never): string | null {
+  const full = [entry?.firstName, entry?.lastName].filter(Boolean).join(" ").trim();
+  return full || entry?.name?.trim() || null;
+}
+
+/* ------------------------------- server fns -------------------------------- */
+
+/**
+ * A page of the public catalog. Category filtering scans forward through the
+ * source pages so a filtered page still comes back full.
+ */
+export const fetchCourses = createServerFn({ method: "GET" })
+  .inputValidator(
+    (input: { q?: string; category?: Category; cursor?: number } | undefined) => ({
+      q: String(input?.q ?? "").slice(0, 120),
+      category: input?.category,
+      cursor: Math.max(1, Number(input?.cursor ?? 1)),
+    }),
+  )
+  .handler(async ({ data }): Promise<CoursePage> => {
+    const wanted = 24;
+    const collected: NormalizedCourse[] = [];
+    let page = data.cursor;
+    let hasMore = true;
+    let scans = 0;
+
+    while (hasMore && collected.length < wanted && scans < 8) {
+      const result = await listPage(data.q, page, 48);
+      scans += 1;
+      if (!result) {
+        if (collected.length === 0) {
+          return {
+            courses: [],
+            nextCursor: null,
+            state: { label: SOURCE_LABEL.source1, status: "error", message: UNREACHABLE, count: 0 },
+          };
+        }
+        break;
+      }
+      for (const item of result.items) {
+        const course = fromListItem(item);
+        if (!course) continue;
+        if (data.category && course.category !== data.category) continue;
+        collected.push(course);
+      }
+      hasMore = result.hasMore;
+      page += 1;
+    }
+
+    return {
+      courses: collected,
+      nextCursor: hasMore ? page : null,
+      state: {
+        label: SOURCE_LABEL.source1,
+        status: "ok",
+        message: null,
+        count: collected.length,
+      },
+    };
+  });
+
+/** Full public details for one course: subjects, teachers, description. */
 export const fetchCourseDetail = createServerFn({ method: "GET" })
   .inputValidator((input: { courseId: string }) => ({ courseId: String(input.courseId) }))
   .handler(async ({ data }): Promise<CourseDetailResult> => {
     const parsed = parseCompositeId(data.courseId);
-    if (!parsed) {
-      return { status: "unavailable", reason: "This course reference is not valid." };
-    }
+    if (!parsed) return { status: "unavailable", reason: "This course reference is not valid." };
 
-    if (parsed.source === "listing") {
-      const match = listedBatches().find((course) => course.id === data.courseId);
-      return match
-        ? { status: "ok", course: match }
-        : { status: "unavailable", reason: "This batch is no longer listed." };
-    }
+    const batchId = parsed.sourceCourseId;
+    const raw = await content<Record<string, unknown>>(`v3/batches/${encodeURIComponent(batchId)}/details`);
+    if (!raw) return { status: "unavailable", reason: UNREACHABLE };
 
-    const { base, key, path } = config(parsed.source);
-    const label = SOURCE_LABEL[parsed.source];
-    if (!base) {
-      return { status: "unavailable", reason: `${label}: ${NOT_CONFIGURED}` };
-    }
+    const rawSubjects = Array.isArray(raw["subjects"]) ? (raw["subjects"] as RawSubject[]) : [];
+    const subjectRefs: SubjectRef[] = rawSubjects
+      .filter((subject) => subject._id && subject.subject)
+      .map((subject) => ({
+        id: subject._id!,
+        name: subject.subject!,
+        lectureCount: typeof subject.lectureCount === "number" ? subject.lectureCount : null,
+        teachers: (subject.teacherIds ?? [])
+          .map((teacher) => teacherName(teacher))
+          .filter((name): name is string => Boolean(name)),
+      }));
 
-    const detail = await readJson(
-      `${base}${path}/${encodeURIComponent(parsed.sourceCourseId)}`,
-      key,
-    );
-    if (detail.ok) {
-      const record =
-        detail.payload && typeof detail.payload === "object"
-          ? (detail.payload as Record<string, unknown>)
-          : null;
-      const candidate =
-        record && !Array.isArray(record)
-          ? (record["course"] ?? record["batch"] ?? record["data"] ?? record)
-          : detail.payload;
-      const course = normalizeCourse(candidate, parsed.source);
-      if (course) return { status: "ok", course };
+    const exam = Array.isArray(raw["exam"]) ? (raw["exam"] as string[])[0] ?? null : null;
+    const className = typeof raw["class"] === "string" ? (raw["class"] as string) : null;
+    const notes: NormalizedNote[] = [];
+    const batchPdf = raw["batchPdfUrl"];
+    if (typeof batchPdf === "string" && batchPdf.startsWith("http")) {
+      notes.push({ id: `${batchId}-batch-pdf`, title: "Batch planner (PDF)", url: batchPdf });
     }
-
-    // Fall back to the list endpoint, which some catalogs use for full records.
-    const fromList = await loadSource(parsed.source);
-    const match = fromList.courses.find(
-      (course) => course.id === compositeId(parsed.source, parsed.sourceCourseId),
-    );
-    if (match) return { status: "ok", course: match };
 
     return {
-      status: "unavailable",
-      reason:
-        fromList.state.message ??
-        `${label} did not return details for this course. Please try again.`,
+      status: "ok",
+      course: {
+        id: compositeId("source1", batchId),
+        sourceCourseId: batchId,
+        source: "source1",
+        sourceLabel: SOURCE_LABEL.source1,
+        sourceUrl: `${base()}/batch/${batchId}`,
+        sourceNote: "Public course page",
+        title: String(raw["name"] ?? "Course"),
+        thumbnail:
+          typeof raw["previewImage"] === "object" && raw["previewImage"]
+            ? buildUrl(raw["previewImage"] as { baseUrl?: string; key?: string })
+            : null,
+        description:
+          plainText(String(raw["description"] ?? "")) ||
+          plainText(String(raw["shortDescription"] ?? "")) ||
+          null,
+        category: categoryFor(exam, className),
+        className: className ? `Class ${className}` : null,
+        exam: exam ? exam.replace(/_/g, " ") : null,
+        language: typeof raw["language"] === "string" ? (raw["language"] as string) : null,
+        startDate: typeof raw["startDate"] === "string" ? (raw["startDate"] as string) : null,
+        subjects: subjectRefs.map((subject) => subject.name),
+        subjectRefs,
+        teachers: Array.from(new Set(subjectRefs.flatMap((subject) => subject.teachers))),
+        chapters: [],
+        lessons: [],
+        videos: [],
+        notes,
+      },
     };
   });
+
+function buildUrl(image: { baseUrl?: string; key?: string } | null): string | null {
+  if (!image?.baseUrl || !image.key) return null;
+  const root = image.baseUrl.endsWith("/") ? image.baseUrl : `${image.baseUrl}/`;
+  return `${root}${image.key.replace(/^\/+/, "")}`;
+}
+
+/** Chapters (topics) inside one subject of a course. */
+export const fetchChapters = createServerFn({ method: "GET" })
+  .inputValidator((input: { courseId: string; subjectId: string }) => ({
+    courseId: String(input.courseId),
+    subjectId: String(input.subjectId),
+  }))
+  .handler(async ({ data }): Promise<{ status: "ok"; chapters: NormalizedChapter[] } | { status: "unavailable"; reason: string }> => {
+    const parsed = parseCompositeId(data.courseId);
+    if (!parsed) return { status: "unavailable", reason: "This course reference is not valid." };
+    const raw = await content<
+      { _id?: string; name?: string; videos?: number; notes?: number; lectureVideos?: number }[]
+    >(
+      `v2/batches/${encodeURIComponent(parsed.sourceCourseId)}/subject/${encodeURIComponent(
+        data.subjectId,
+      )}/topics`,
+    );
+    if (!raw) return { status: "unavailable", reason: UNREACHABLE };
+    const chapters: NormalizedChapter[] = raw
+      .filter((topic) => topic._id && topic.name)
+      .map((topic) => ({
+        id: topic._id!,
+        title: topic.name!,
+        subject: null,
+        videoCount: typeof topic.videos === "number" ? topic.videos : null,
+        noteCount: typeof topic.notes === "number" ? topic.notes : null,
+        lessons: [],
+      }));
+    return { status: "ok", chapters };
+  });
+
+type RawContent = {
+  _id?: string;
+  topic?: string;
+  url?: string | null;
+  urlType?: string | null;
+  videoDetails?: { name?: string; duration?: string; image?: string } | null;
+  homeworkIds?: {
+    topic?: string;
+    attachmentIds?: { baseUrl?: string; key?: string; name?: string }[];
+  }[];
+};
+
+/** Lectures and notes published inside one chapter. */
+export const fetchChapterContents = createServerFn({ method: "GET" })
+  .inputValidator((input: { courseId: string; subjectId: string; chapterId: string }) => ({
+    courseId: String(input.courseId),
+    subjectId: String(input.subjectId),
+    chapterId: String(input.chapterId),
+  }))
+  .handler(
+    async ({
+      data,
+    }): Promise<
+      | { status: "ok"; lessons: NormalizedLesson[]; notes: NormalizedNote[] }
+      | { status: "unavailable"; reason: string }
+    > => {
+      const parsed = parseCompositeId(data.courseId);
+      if (!parsed) return { status: "unavailable", reason: "This course reference is not valid." };
+      const root = `v2/batches/${encodeURIComponent(parsed.sourceCourseId)}/subject/${encodeURIComponent(
+        data.subjectId,
+      )}/contents`;
+      const query = `page=1&tag=${encodeURIComponent(data.chapterId)}`;
+
+      const [videos, noteItems] = await Promise.all([
+        content<RawContent[]>(`${root}?${query}&contentType=videos`),
+        content<RawContent[]>(`${root}?${query}&contentType=notes`),
+      ]);
+
+      if (!videos && !noteItems) return { status: "unavailable", reason: UNREACHABLE };
+
+      const lessons: NormalizedLesson[] = (videos ?? [])
+        .filter((item) => item._id)
+        .map((item) => {
+          const youtube = item.urlType === "youtube" && item.url ? item.url : null;
+          return {
+            id: item._id!,
+            title: item.topic ?? item.videoDetails?.name ?? "Lecture",
+            chapterId: data.chapterId,
+            durationSeconds: null,
+            videoUrl: youtube,
+            posterUrl: item.videoDetails?.image ?? null,
+            transcript: null,
+          };
+        });
+
+      const notes: NormalizedNote[] = [];
+      for (const item of noteItems ?? []) {
+        for (const homework of item.homeworkIds ?? []) {
+          for (const attachment of homework.attachmentIds ?? []) {
+            const url = buildUrl(attachment);
+            if (!url) continue;
+            notes.push({
+              id: `${item._id ?? "n"}-${attachment.key ?? notes.length}`,
+              title: homework.topic ?? attachment.name ?? "Notes (PDF)",
+              url,
+            });
+          }
+        }
+      }
+
+      return { status: "ok", lessons, notes };
+    },
+  );
+
+export type LiveClass = {
+  id: string;
+  topic: string;
+  subjectId: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  image: string | null;
+};
+
+/** Today's publicly listed schedule for a course. */
+export const fetchTodaySchedule = createServerFn({ method: "GET" })
+  .inputValidator((input: { courseId: string }) => ({ courseId: String(input.courseId) }))
+  .handler(
+    async ({
+      data,
+    }): Promise<
+      { status: "ok"; classes: LiveClass[] } | { status: "unavailable"; reason: string }
+    > => {
+      const parsed = parseCompositeId(data.courseId);
+      if (!parsed) return { status: "unavailable", reason: "This course reference is not valid." };
+      const raw = await content<
+        {
+          _id?: string;
+          type?: string;
+          data?: {
+            _id?: string;
+            topic?: string;
+            startTime?: string;
+            endTime?: string;
+            batchSubjectId?: string;
+            subjectId?: string | { _id?: string };
+            videoDetails?: { image?: string; name?: string };
+          };
+        }[]
+      >(`v2/batches/${encodeURIComponent(parsed.sourceCourseId)}/todays-schedule`);
+      if (!raw) return { status: "unavailable", reason: UNREACHABLE };
+
+      const classes: LiveClass[] = raw
+        .map((entry) => entry.data ?? {})
+        .filter((entry) => entry._id)
+        .map((entry) => ({
+          id: entry._id!,
+          topic: entry.topic ?? entry.videoDetails?.name ?? "Class",
+          subjectId:
+            entry.batchSubjectId ??
+            (typeof entry.subjectId === "string" ? entry.subjectId : entry.subjectId?._id ?? null),
+          startTime: entry.startTime ?? null,
+          endTime: entry.endTime ?? null,
+          image: entry.videoDetails?.image ?? null,
+        }));
+
+      return { status: "ok", classes };
+    },
+  );
