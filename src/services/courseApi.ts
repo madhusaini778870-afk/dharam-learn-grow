@@ -209,6 +209,14 @@ export const fetchCourseDetail = createServerFn({ method: "GET" })
     if (!parsed) {
       return { status: "unavailable", reason: "This course reference is not valid." };
     }
+
+    if (parsed.source === "listing") {
+      const match = listedBatches().find((course) => course.id === data.courseId);
+      return match
+        ? { status: "ok", course: match }
+        : { status: "unavailable", reason: "This batch is no longer listed." };
+    }
+
     const { base, key, path } = config(parsed.source);
     const label = SOURCE_LABEL[parsed.source];
     if (!base) {
