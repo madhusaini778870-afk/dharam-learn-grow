@@ -158,14 +158,32 @@ async function loadSource(
   };
 }
 
+/** Publicly listed batches supplied by the app owner (no API needed). */
+function loadListing(): { courses: NormalizedCourse[]; state: SourceState } {
+  const courses = listedBatches();
+  return {
+    courses,
+    state: {
+      source: "listing",
+      label: SOURCE_LABEL.listing,
+      status: "ok",
+      message: "Publicly listed batches. Links open the public listing page only.",
+      count: courses.length,
+    },
+  };
+}
+
 /** Complete combined catalog: all pages from both sources, duplicates removed. */
 export const fetchCatalog = createServerFn({ method: "GET" }).handler(
   async (): Promise<CatalogPayload> => {
     const [first, second] = await Promise.all([loadSource("source1"), loadSource("source2")]);
-    const courses = dedupeCourses([...first.courses, ...second.courses]).sort((a, b) =>
-      a.title.localeCompare(b.title),
-    );
-    return { courses, sources: [first.state, second.state] };
+    const listing = loadListing();
+    const courses = dedupeCourses([
+      ...listing.courses,
+      ...first.courses,
+      ...second.courses,
+    ]).sort((a, b) => a.title.localeCompare(b.title));
+    return { courses, sources: [listing.state, first.state, second.state] };
   },
 );
 
