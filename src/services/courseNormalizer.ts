@@ -159,7 +159,7 @@ export function deriveCategory(raw: Raw, className: string | null, exam: string 
 
 /* ---------------------------------- ids ----------------------------------- */
 
-const PREFIX: Record<CourseSource, string> = { source1: "s1", source2: "s2" };
+const PREFIX: Record<CourseSource, string> = { source1: "s1", source2: "s2", listing: "pl" };
 
 export function compositeId(source: CourseSource, sourceCourseId: string): string {
   return `${PREFIX[source]}-${encodeURIComponent(sourceCourseId)}`;
