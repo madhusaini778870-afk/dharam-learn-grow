@@ -9,8 +9,12 @@ export function CourseCard({
   course: NormalizedCourse;
   enrolled?: boolean;
 }) {
-  const chips = [course.category, course.className, ...course.subjects.slice(0, 2)].filter(
-    (chip): chip is string => Boolean(chip),
+  const chips = Array.from(
+    new Set(
+      [course.category, course.className, ...course.subjects.slice(0, 2)].filter(
+        (chip): chip is string => Boolean(chip),
+      ),
+    ),
   );
 
   return (
