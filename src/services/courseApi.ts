@@ -10,6 +10,7 @@ import {
   type CourseSource,
   type NormalizedCourse,
 } from "./courseNormalizer";
+import { listedBatches } from "./publicBatches";
 
 /**
  * Combined course catalog for both authorized sources.
