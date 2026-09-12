@@ -6,12 +6,19 @@
  * or left null/empty.
  */
 
-export type CourseSource = "source1" | "source2";
+export type CourseSource = "source1" | "source2" | "listing";
 
 export const SOURCE_LABEL: Record<CourseSource, string> = {
   source1: "Source 1",
   source2: "Source 2",
+  listing: "Public listing",
 };
+
+/** Public listing page the owner supplied. Never deep-linked into. */
+export const LISTING_SOURCE_URL = "https://www.pwmarco.site/study/batches";
+
+/** Public YouTube channel supplied by the owner. */
+export const YOUTUBE_CHANNEL_URL = "https://youtube.com/@pw-jeewallah";
 
 export type Category =
   | "JEE"
