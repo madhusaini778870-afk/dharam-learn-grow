@@ -52,6 +52,7 @@ function BooksScreen() {
             action={
               <Link
                 to="/courses"
+                search={{ category: undefined }}
                 className="press inline-flex rounded-2xl bg-primary px-4 py-2.5 text-[13px] font-semibold text-primary-foreground"
               >
                 Browse courses

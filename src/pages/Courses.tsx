@@ -34,7 +34,11 @@ export function CoursesPage({
     queryKey: ["courses", query, category ?? "all"],
     initialPageParam: 1,
     queryFn: ({ pageParam }) =>
-      loadCourses({ data: { q: query, category, cursor: pageParam as number } }),
+      loadCourses({
+        data: category
+          ? { q: query, category, cursor: pageParam as number }
+          : { q: query, cursor: pageParam as number },
+      }),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     retry: false,
     staleTime: 5 * 60_000,

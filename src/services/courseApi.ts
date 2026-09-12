@@ -206,7 +206,9 @@ type RawSubject = {
   teacherIds?: { firstName?: string; lastName?: string; name?: string }[];
 };
 
-function teacherName(entry: RawSubject["teacherIds"] extends (infer T)[] ? T : never): string | null {
+type RawTeacher = { firstName?: string; lastName?: string; name?: string };
+
+function teacherName(entry: RawTeacher | null | undefined): string | null {
   const full = [entry?.firstName, entry?.lastName].filter(Boolean).join(" ").trim();
   return full || entry?.name?.trim() || null;
 }
