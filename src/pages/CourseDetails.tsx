@@ -440,3 +440,90 @@ function ChapterContents({
     </div>
   );
 }
+
+/** Chapters and lectures added inside Dharam Bhai Study by an admin. */
+function AddedSubjectBlock({
+  courseId,
+  subject,
+  chapters,
+  isEnrolled,
+}: {
+  courseId: string;
+  subject: { id: string; name: string; lectureCount: number | null };
+  chapters: {
+    id: string;
+    title: string;
+    videoCount?: number | null;
+    noteCount?: number | null;
+    lessons: { id: string; title: string; playback: string }[];
+  }[];
+  isEnrolled: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center gap-2 text-left"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold leading-tight">{subject.name}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            {subject.lectureCount ?? 0} lectures
+          </p>
+        </div>
+        <ChevronRight
+          className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`}
+        />
+      </button>
+
+      {open ? (
+        <div className="mt-2.5 space-y-1.5">
+          {chapters.length === 0 ? (
+            <p className="text-[12px] text-muted-foreground">No chapters added yet.</p>
+          ) : null}
+          {chapters.map((chapter) => (
+            <div key={chapter.id} className="rounded-xl bg-background px-3 py-2.5">
+              <div className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 text-[13px]">{chapter.title}</span>
+                <span className="shrink-0 text-[10px] text-muted-foreground">
+                  {chapter.videoCount ?? 0} videos · {chapter.noteCount ?? 0} notes
+                </span>
+              </div>
+              <div className="mt-2 space-y-1.5">
+                {chapter.lessons.map((lesson) =>
+                  isEnrolled ? (
+                    <Link
+                      key={lesson.id}
+                      to="/lesson/$courseId/$lessonId"
+                      params={{ courseId, lessonId: lesson.id }}
+                      search={{ subjectId: subject.id, chapterId: chapter.id }}
+                      className="press flex items-center gap-2 rounded-lg bg-card px-3 py-2"
+                    >
+                      <span className="min-w-0 flex-1 truncate text-[12px]">{lesson.title}</span>
+                      {lesson.playback !== "none" ? (
+                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.1em] text-pine">
+                          Video
+                        </span>
+                      ) : null}
+                    </Link>
+                  ) : (
+                    <div
+                      key={lesson.id}
+                      className="flex items-center gap-2 rounded-lg bg-card/60 px-3 py-2 text-[12px] text-muted-foreground"
+                    >
+                      <LockIcon className="size-3.5 shrink-0 text-locked" />
+                      <span className="min-w-0 flex-1 truncate">{lesson.title}</span>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
