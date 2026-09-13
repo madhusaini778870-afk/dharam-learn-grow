@@ -4,6 +4,8 @@ import {
   parseCompositeId,
   plainText,
   categoryFor,
+  durationToSeconds,
+  resolvePlayback,
   SOURCE_LABEL,
   type Category,
   type NormalizedChapter,
@@ -375,12 +377,38 @@ type RawContent = {
   topic?: string;
   url?: string | null;
   urlType?: string | null;
-  videoDetails?: { name?: string; duration?: string; image?: string } | null;
+  videoUrl?: string | null;
+  embedUrl?: string | null;
+  teachers?: RawTeacher[] | null;
+  videoDetails?: {
+    name?: string;
+    duration?: string | number;
+    image?: string;
+    videoUrl?: string | null;
+    embedCode?: string | null;
+    findKey?: string | null;
+  } | null;
   homeworkIds?: {
     topic?: string;
     attachmentIds?: { baseUrl?: string; key?: string; name?: string }[];
   }[];
 };
+
+/** First publicly published URL for a lecture, whatever field it arrived in. */
+function lectureUrl(item: RawContent): { url: string | null; urlType: string | null } {
+  const candidates: (string | null | undefined)[] = [
+    item.videoDetails?.videoUrl,
+    item.videoUrl,
+    item.url,
+    item.embedUrl,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && /^https?:\/\//i.test(candidate.trim())) {
+      return { url: candidate.trim(), urlType: item.urlType ?? null };
+    }
+  }
+  return { url: null, urlType: item.urlType ?? null };
+}
 
 /** Lectures and notes published inside one chapter. */
 export const fetchChapterContents = createServerFn({ method: "GET" })
@@ -413,15 +441,20 @@ export const fetchChapterContents = createServerFn({ method: "GET" })
       const lessons: NormalizedLesson[] = (videos ?? [])
         .filter((item) => item._id)
         .map((item) => {
-          const youtube = item.urlType === "youtube" && item.url ? item.url : null;
+          const { url, urlType } = lectureUrl(item);
+          const resolved = resolvePlayback(url, urlType);
           return {
             id: item._id!,
             title: item.topic ?? item.videoDetails?.name ?? "Lecture",
             chapterId: data.chapterId,
-            durationSeconds: null,
-            videoUrl: youtube,
+            durationSeconds: durationToSeconds(item.videoDetails?.duration),
+            videoUrl: resolved.videoUrl,
+            embedUrl: resolved.embedUrl,
+            playback: resolved.playback,
             posterUrl: item.videoDetails?.image ?? null,
+            teacher: (item.teachers ?? []).map(teacherName).filter(Boolean)[0] ?? null,
             transcript: null,
+            notesUrl: null,
           };
         });
 
