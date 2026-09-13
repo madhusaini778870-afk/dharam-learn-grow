@@ -126,6 +126,7 @@ function RootComponent() {
       <AuthProvider>
         {/* Required: nested routes render here. */}
         <Outlet />
+        <CommunityPopup />
       </AuthProvider>
     </QueryClientProvider>
   );
