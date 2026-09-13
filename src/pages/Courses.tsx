@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { fetchCourses } from "@/services/courseApi";
-import { CATEGORIES, type Category } from "@/services/courseNormalizer";
+import { applyOverrides, loadAdminCourses, loadOverrides } from "@/services/adminCatalog";
+import { CATEGORIES, matchesQuery, type Category } from "@/services/courseNormalizer";
 import { CourseCard } from "@/components/CourseCard";
 import { Screen, Footer, PageHeader, SearchIcon } from "@/components/app-shell";
 import { ListSkeleton, RetryButton, StateCard } from "@/components/states";
+
 
 export function CoursesPage({
   category,
@@ -44,10 +46,30 @@ export function CoursesPage({
     staleTime: 5 * 60_000,
   });
 
-  const courses = useMemo(
-    () => catalog.data?.pages.flatMap((page) => page.courses) ?? [],
-    [catalog.data],
-  );
+  // Courses added inside Dharam Bhai Study by an admin, plus the admin's
+  // hide/rename decisions for courses coming from the public source.
+  const added = useQuery({
+    queryKey: ["admin-courses"],
+    queryFn: loadAdminCourses,
+    staleTime: 60_000,
+  });
+  const overrides = useQuery({
+    queryKey: ["course-overrides"],
+    queryFn: loadOverrides,
+    staleTime: 60_000,
+  });
+
+  const courses = useMemo(() => {
+    const fromSource = applyOverrides(
+      catalog.data?.pages.flatMap((page) => page.courses) ?? [],
+      overrides.data,
+    );
+    const fromAdmin = (added.data ?? []).filter(
+      (course) =>
+        (!category || course.category === category) && matchesQuery(course, query),
+    );
+    return [...fromAdmin, ...fromSource];
+  }, [catalog.data, overrides.data, added.data, category, query]);
   const failed = catalog.data?.pages.some((page) => page.state.status === "error") ?? false;
 
   useEffect(() => {

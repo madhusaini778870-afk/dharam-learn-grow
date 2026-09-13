@@ -3,6 +3,8 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { fetchChapterContents, fetchChapters, fetchCourseDetail } from "@/services/courseApi";
+import { loadAdminCourse } from "@/services/adminCatalog";
+import { parseCompositeId, type NormalizedCourse } from "@/services/courseNormalizer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Screen, PageHeader, LockIcon, ChevronRight, Footer } from "@/components/app-shell";
@@ -13,6 +15,8 @@ export function CourseDetailsPage({ courseId }: { courseId: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const loadCourse = useServerFn(fetchCourseDetail);
+  const parsed = parseCompositeId(courseId);
+  const isAdminCourse = parsed?.source === "admin";
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -20,7 +24,15 @@ export function CourseDetailsPage({ courseId }: { courseId: string }) {
 
   const course = useQuery({
     queryKey: ["course", courseId],
+    enabled: !isAdminCourse,
     queryFn: () => loadCourse({ data: { courseId } }),
+    retry: false,
+  });
+
+  const addedCourse = useQuery({
+    queryKey: ["admin-course", courseId],
+    enabled: isAdminCourse,
+    queryFn: () => loadAdminCourse(parsed!.sourceCourseId),
     retry: false,
   });
 
@@ -38,7 +50,14 @@ export function CourseDetailsPage({ courseId }: { courseId: string }) {
     },
   });
 
-  const detail = course.data?.status === "ok" ? course.data.course : null;
+  const detail: NormalizedCourse | null = isAdminCourse
+    ? addedCourse.data ?? null
+    : course.data?.status === "ok"
+      ? course.data.course
+      : null;
+  const busy = isAdminCourse ? addedCourse.isLoading : course.isLoading;
+  const broken = isAdminCourse ? addedCourse.isError : course.isError;
+  const reload = () => void (isAdminCourse ? addedCourse.refetch() : course.refetch());
 
   const enroll = useMutation({
     mutationFn: async () => {
@@ -66,13 +85,13 @@ export function CourseDetailsPage({ courseId }: { courseId: string }) {
       <PageHeader title="Course details" back="/courses" />
 
       <div className="mt-2 px-5 pb-24">
-        {course.isLoading ? <ListSkeleton count={2} /> : null}
-        {course.isError ? (
+        {busy ? <ListSkeleton count={2} /> : null}
+        {broken ? (
           <StateCard
             tone="warn"
             title="Couldn't load this course"
             body="The course service could not be reached. Check your connection and try again."
-            action={<RetryButton onClick={() => course.refetch()} />}
+            action={<RetryButton onClick={reload} />}
           />
         ) : null}
         {course.data?.status === "unavailable" ? (
@@ -80,8 +99,11 @@ export function CourseDetailsPage({ courseId }: { courseId: string }) {
             tone="warn"
             title="Course unavailable"
             body={course.data.reason}
-            action={<RetryButton onClick={() => course.refetch()} />}
+            action={<RetryButton onClick={reload} />}
           />
+        ) : null}
+        {isAdminCourse && !busy && !broken && !detail ? (
+          <StateCard title="Course unavailable" body="This course is no longer published." />
         ) : null}
 
         {detail ? (
@@ -155,14 +177,24 @@ export function CourseDetailsPage({ courseId }: { courseId: string }) {
                   body="The public source did not include subject data for this course."
                 />
               ) : null}
-              {detail.subjectRefs.map((subject) => (
-                <SubjectBlock
-                  key={subject.id}
-                  courseId={detail.id}
-                  subject={subject}
-                  isEnrolled={isEnrolled}
-                />
-              ))}
+              {detail.subjectRefs.map((subject) =>
+                isAdminCourse ? (
+                  <AddedSubjectBlock
+                    key={subject.id}
+                    courseId={detail.id}
+                    subject={subject}
+                    chapters={detail.chapters.filter((chapter) => chapter.subject === subject.name)}
+                    isEnrolled={isEnrolled}
+                  />
+                ) : (
+                  <SubjectBlock
+                    key={subject.id}
+                    courseId={detail.id}
+                    subject={subject}
+                    isEnrolled={isEnrolled}
+                  />
+                ),
+              )}
             </div>
 
             {detail.notes.length ? (
@@ -405,6 +437,93 @@ function ChapterContents({
           📄 {note.title}
         </a>
       ))}
+    </div>
+  );
+}
+
+/** Chapters and lectures added inside Dharam Bhai Study by an admin. */
+function AddedSubjectBlock({
+  courseId,
+  subject,
+  chapters,
+  isEnrolled,
+}: {
+  courseId: string;
+  subject: { id: string; name: string; lectureCount: number | null };
+  chapters: {
+    id: string;
+    title: string;
+    videoCount?: number | null;
+    noteCount?: number | null;
+    lessons: { id: string; title: string; playback: string }[];
+  }[];
+  isEnrolled: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center gap-2 text-left"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold leading-tight">{subject.name}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            {subject.lectureCount ?? 0} lectures
+          </p>
+        </div>
+        <ChevronRight
+          className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`}
+        />
+      </button>
+
+      {open ? (
+        <div className="mt-2.5 space-y-1.5">
+          {chapters.length === 0 ? (
+            <p className="text-[12px] text-muted-foreground">No chapters added yet.</p>
+          ) : null}
+          {chapters.map((chapter) => (
+            <div key={chapter.id} className="rounded-xl bg-background px-3 py-2.5">
+              <div className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 text-[13px]">{chapter.title}</span>
+                <span className="shrink-0 text-[10px] text-muted-foreground">
+                  {chapter.videoCount ?? 0} videos · {chapter.noteCount ?? 0} notes
+                </span>
+              </div>
+              <div className="mt-2 space-y-1.5">
+                {chapter.lessons.map((lesson) =>
+                  isEnrolled ? (
+                    <Link
+                      key={lesson.id}
+                      to="/lesson/$courseId/$lessonId"
+                      params={{ courseId, lessonId: lesson.id }}
+                      search={{ subjectId: subject.id, chapterId: chapter.id }}
+                      className="press flex items-center gap-2 rounded-lg bg-card px-3 py-2"
+                    >
+                      <span className="min-w-0 flex-1 truncate text-[12px]">{lesson.title}</span>
+                      {lesson.playback !== "none" ? (
+                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.1em] text-pine">
+                          Video
+                        </span>
+                      ) : null}
+                    </Link>
+                  ) : (
+                    <div
+                      key={lesson.id}
+                      className="flex items-center gap-2 rounded-lg bg-card/60 px-3 py-2 text-[12px] text-muted-foreground"
+                    >
+                      <LockIcon className="size-3.5 shrink-0 text-locked" />
+                      <span className="min-w-0 flex-1 truncate">{lesson.title}</span>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

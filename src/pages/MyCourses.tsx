@@ -21,7 +21,9 @@ export function MyCoursesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("enrollments")
-        .select("id, course_id, course_title, exam, thumbnail_url, created_at")
+        .select(
+          "id, course_id, course_title, exam, thumbnail_url, created_at, last_lesson_id, last_lesson_title, last_subject_id, last_chapter_id",
+        )
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -75,12 +77,13 @@ export function MyCoursesPage() {
         {enrollments.data?.map((item) => {
           const rows = progress.data?.filter((row) => row.course_id === item.course_id) ?? [];
           const done = rows.filter((row) => row.completed).length;
+          const percent = rows.length > 0 ? Math.round((done / rows.length) * 100) : 0;
           return (
+            <div key={item.id} className="rounded-3xl bg-card p-3 ring-1 ring-border">
             <Link
-              key={item.id}
               to="/course/$courseId"
               params={{ courseId: item.course_id }}
-              className="press flex items-center gap-3 rounded-3xl bg-card p-3 ring-1 ring-border"
+              className="press flex items-center gap-3"
             >
               {item.thumbnail_url ? (
                 <img
@@ -109,6 +112,24 @@ export function MyCoursesPage() {
               </div>
               <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
             </Link>
+
+            {rows.length > 0 ? (
+              <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-pine" style={{ width: `${percent}%` }} />
+              </div>
+            ) : null}
+
+            {item.last_lesson_id && item.last_subject_id && item.last_chapter_id ? (
+              <Link
+                to="/lesson/$courseId/$lessonId"
+                params={{ courseId: item.course_id, lessonId: item.last_lesson_id }}
+                search={{ subjectId: item.last_subject_id, chapterId: item.last_chapter_id }}
+                className="press mt-2.5 block truncate rounded-2xl bg-foreground px-3.5 py-2.5 text-[12px] font-semibold text-background"
+              >
+                Continue: {item.last_lesson_title ?? "last lecture"}
+              </Link>
+            ) : null}
+            </div>
           );
         })}
       </div>
