@@ -21,7 +21,9 @@ export function MyCoursesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("enrollments")
-        .select("id, course_id, course_title, exam, thumbnail_url, created_at")
+        .select(
+          "id, course_id, course_title, exam, thumbnail_url, created_at, last_lesson_id, last_lesson_title, last_subject_id, last_chapter_id",
+        )
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
