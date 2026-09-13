@@ -3,6 +3,8 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { fetchChapterContents, fetchChapters, fetchCourseDetail } from "@/services/courseApi";
+import { loadAdminCourse } from "@/services/adminCatalog";
+import { parseCompositeId, type NormalizedCourse } from "@/services/courseNormalizer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Screen, PageHeader, LockIcon, ChevronRight, Footer } from "@/components/app-shell";
@@ -13,6 +15,8 @@ export function CourseDetailsPage({ courseId }: { courseId: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const loadCourse = useServerFn(fetchCourseDetail);
+  const parsed = parseCompositeId(courseId);
+  const isAdminCourse = parsed?.source === "admin";
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -20,7 +24,15 @@ export function CourseDetailsPage({ courseId }: { courseId: string }) {
 
   const course = useQuery({
     queryKey: ["course", courseId],
+    enabled: !isAdminCourse,
     queryFn: () => loadCourse({ data: { courseId } }),
+    retry: false,
+  });
+
+  const addedCourse = useQuery({
+    queryKey: ["admin-course", courseId],
+    enabled: isAdminCourse,
+    queryFn: () => loadAdminCourse(parsed!.sourceCourseId),
     retry: false,
   });
 
@@ -38,7 +50,14 @@ export function CourseDetailsPage({ courseId }: { courseId: string }) {
     },
   });
 
-  const detail = course.data?.status === "ok" ? course.data.course : null;
+  const detail: NormalizedCourse | null = isAdminCourse
+    ? addedCourse.data ?? null
+    : course.data?.status === "ok"
+      ? course.data.course
+      : null;
+  const busy = isAdminCourse ? addedCourse.isLoading : course.isLoading;
+  const broken = isAdminCourse ? addedCourse.isError : course.isError;
+  const reload = () => void (isAdminCourse ? addedCourse.refetch() : course.refetch());
 
   const enroll = useMutation({
     mutationFn: async () => {
