@@ -18,7 +18,7 @@ export function VideoPlayer({
   onHandle,
 }: {
   src: string;
-  poster?: string | null;
+  poster?: string | null | undefined;
   startAt?: number;
   onProgress?: (seconds: number, duration: number) => void;
   onEnded?: (duration: number) => void;
