@@ -177,14 +177,24 @@ export function CourseDetailsPage({ courseId }: { courseId: string }) {
                   body="The public source did not include subject data for this course."
                 />
               ) : null}
-              {detail.subjectRefs.map((subject) => (
-                <SubjectBlock
-                  key={subject.id}
-                  courseId={detail.id}
-                  subject={subject}
-                  isEnrolled={isEnrolled}
-                />
-              ))}
+              {detail.subjectRefs.map((subject) =>
+                isAdminCourse ? (
+                  <AddedSubjectBlock
+                    key={subject.id}
+                    courseId={detail.id}
+                    subject={subject}
+                    chapters={detail.chapters.filter((chapter) => chapter.subject === subject.name)}
+                    isEnrolled={isEnrolled}
+                  />
+                ) : (
+                  <SubjectBlock
+                    key={subject.id}
+                    courseId={detail.id}
+                    subject={subject}
+                    isEnrolled={isEnrolled}
+                  />
+                ),
+              )}
             </div>
 
             {detail.notes.length ? (
