@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { fetchCourses } from "@/services/courseApi";
-import { CATEGORIES, type Category } from "@/services/courseNormalizer";
+import { applyOverrides, loadAdminCourses, loadOverrides } from "@/services/adminCatalog";
+import { CATEGORIES, matchesQuery, type Category } from "@/services/courseNormalizer";
 import { CourseCard } from "@/components/CourseCard";
 import { Screen, Footer, PageHeader, SearchIcon } from "@/components/app-shell";
 import { ListSkeleton, RetryButton, StateCard } from "@/components/states";
+
 
 export function CoursesPage({
   category,
