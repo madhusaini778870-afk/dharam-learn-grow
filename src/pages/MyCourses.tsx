@@ -112,6 +112,24 @@ export function MyCoursesPage() {
               </div>
               <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
             </Link>
+
+            {rows.length > 0 ? (
+              <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-pine" style={{ width: `${percent}%` }} />
+              </div>
+            ) : null}
+
+            {item.last_lesson_id && item.last_subject_id && item.last_chapter_id ? (
+              <Link
+                to="/lesson/$courseId/$lessonId"
+                params={{ courseId: item.course_id, lessonId: item.last_lesson_id }}
+                search={{ subjectId: item.last_subject_id, chapterId: item.last_chapter_id }}
+                className="press mt-2.5 block truncate rounded-2xl bg-foreground px-3.5 py-2.5 text-[12px] font-semibold text-background"
+              >
+                Continue: {item.last_lesson_title ?? "last lecture"}
+              </Link>
+            ) : null}
+            </div>
           );
         })}
       </div>
