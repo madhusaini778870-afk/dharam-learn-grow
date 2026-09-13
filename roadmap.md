@@ -1,13 +1,16 @@
 # Dharam Bhai Study — master update roadmap
 
-- [ ] DB: roles, admin settings, admin catalog, progress/resume columns
-- [ ] Auth: register (confirm password), login errors, forgot + reset password, session persistence, logout
-- [ ] Protected routes (My Courses, enroll, progress, profile, admin)
-- [ ] Video root fix: source -> batch -> subject -> chapter -> lecture -> playable url mapping
-- [ ] Custom player (play/pause, seek, volume, speed, PiP, fullscreen, resume) + authorized embed fallback + "Video not publicly available"
-- [ ] Lecture page: separate Lecture / Notes tabs, Mark as Completed
-- [ ] Progress: chapter + course progress, last watched lecture
-- [ ] My Courses: progress, completed count, Continue Learning
-- [ ] Admin panel: dashboard, courses/batches/lectures/notes, users, source settings, WhatsApp/Telegram settings
-- [ ] WhatsApp + Telegram join popup with cooldown, admin toggles
-- [ ] Test flows end to end
+Done
+- [x] DB: roles, admin settings, admin catalogue tables, progress/resume/last-lecture columns
+- [x] Video root fix: lecture URL picked from every published field, direct file vs authorized embed vs "not publicly available"
+- [x] Custom player for direct videos (play/pause, seek, volume, speed, PiP, fullscreen, resume)
+- [x] Lecture screen: Lecture / Notes tabs, Mark as completed, chapter lecture list, resume position
+- [x] Progress saving + My Courses progress bar and Continue Learning
+- [x] Admin-added courses appear in the catalogue and open inside the app
+- [x] WhatsApp / Telegram popup driven by admin settings with cooldown
+
+Open
+- [ ] Admin panel screens (dashboard, add/edit courses, lectures, notes, hide/rename source batches, users, settings) — DB and access rules ready, UI not built
+- [ ] Forgot password + reset password screens, confirm-password field on signup
+- [ ] Assign the first admin account (needs the email to grant the admin role to)
+- [ ] Live/Books screens still read only the primary source; pwmarco + vidya-verse have no public data endpoint found yet
