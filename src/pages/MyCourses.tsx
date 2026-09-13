@@ -77,12 +77,13 @@ export function MyCoursesPage() {
         {enrollments.data?.map((item) => {
           const rows = progress.data?.filter((row) => row.course_id === item.course_id) ?? [];
           const done = rows.filter((row) => row.completed).length;
+          const percent = rows.length > 0 ? Math.round((done / rows.length) * 100) : 0;
           return (
+            <div key={item.id} className="rounded-3xl bg-card p-3 ring-1 ring-border">
             <Link
-              key={item.id}
               to="/course/$courseId"
               params={{ courseId: item.course_id }}
-              className="press flex items-center gap-3 rounded-3xl bg-card p-3 ring-1 ring-border"
+              className="press flex items-center gap-3"
             >
               {item.thumbnail_url ? (
                 <img
