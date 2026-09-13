@@ -85,13 +85,13 @@ export function CourseDetailsPage({ courseId }: { courseId: string }) {
       <PageHeader title="Course details" back="/courses" />
 
       <div className="mt-2 px-5 pb-24">
-        {course.isLoading ? <ListSkeleton count={2} /> : null}
-        {course.isError ? (
+        {busy ? <ListSkeleton count={2} /> : null}
+        {broken ? (
           <StateCard
             tone="warn"
             title="Couldn't load this course"
             body="The course service could not be reached. Check your connection and try again."
-            action={<RetryButton onClick={() => course.refetch()} />}
+            action={<RetryButton onClick={reload} />}
           />
         ) : null}
         {course.data?.status === "unavailable" ? (
@@ -99,8 +99,11 @@ export function CourseDetailsPage({ courseId }: { courseId: string }) {
             tone="warn"
             title="Course unavailable"
             body={course.data.reason}
-            action={<RetryButton onClick={() => course.refetch()} />}
+            action={<RetryButton onClick={reload} />}
           />
+        ) : null}
+        {isAdminCourse && !busy && !broken && !detail ? (
+          <StateCard title="Course unavailable" body="This course is no longer published." />
         ) : null}
 
         {detail ? (
