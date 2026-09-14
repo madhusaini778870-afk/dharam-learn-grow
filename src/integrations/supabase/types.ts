@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_books: {
+        Row: {
+          class_name: string | null
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          enabled: boolean
+          exam: string | null
+          file_url: string | null
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          class_name?: string | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          exam?: string | null
+          file_url?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          class_name?: string | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          exam?: string | null
+          file_url?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_courses: {
         Row: {
           category: string | null
@@ -105,6 +144,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      admin_live_classes: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          exam: string | null
+          id: string
+          join_url: string | null
+          starts_at: string | null
+          subject: string | null
+          teacher: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          exam?: string | null
+          id?: string
+          join_url?: string | null
+          starts_at?: string | null
+          subject?: string | null
+          teacher?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          exam?: string | null
+          id?: string
+          join_url?: string | null
+          starts_at?: string | null
+          subject?: string | null
+          teacher?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       admin_notes: {
         Row: {
