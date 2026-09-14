@@ -55,6 +55,10 @@ function AuthScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // Until the page is interactive, the form would submit as a plain page reload.
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => setReady(true), []);
 
   useEffect(() => {
     if (session) navigate({ to: "/home", replace: true });
@@ -222,7 +226,7 @@ function AuthScreen() {
 
         <button
           type="submit"
-          disabled={busy}
+          disabled={busy || !ready}
           className="press w-full rounded-2xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
         >
           {busy

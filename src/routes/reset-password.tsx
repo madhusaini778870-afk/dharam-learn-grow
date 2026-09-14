@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/reset-password")({
@@ -26,6 +26,9 @@ function ResetPassword() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => setReady(true), []);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -99,7 +102,7 @@ function ResetPassword() {
 
         <button
           type="submit"
-          disabled={busy}
+          disabled={busy || !ready}
           className="press w-full rounded-2xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
         >
           {busy ? "Saving…" : "Save password"}
