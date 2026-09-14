@@ -44,6 +44,7 @@ function BooksScreen() {
     <Screen>
       <PageHeader title="Books & Notes" subtitle="Notes published with your enrolled courses" />
       <div className="mt-4 space-y-3 px-5">
+        <AdminBooks />
         {enrollments.isLoading ? <ListSkeleton count={2} /> : null}
         {enrollments.data && enrollments.data.length === 0 ? (
           <StateCard
@@ -101,6 +102,50 @@ function CourseNotes({ courseId, title }: { courseId: string; title: string }) {
           <span className="flex-1">Chapter notes &amp; PDFs</span>
           <ChevronRight className="size-4 text-muted-foreground" />
         </Link>
+      </div>
+    </div>
+  );
+}
+
+/** Books published by the Dharam Bhai Study admin. */
+function AdminBooks() {
+  const books = useQuery({
+    queryKey: ["admin-books-public"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("admin_books")
+        .select("id, title, description, cover_url, file_url, exam, class_name")
+        .eq("enabled", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  if (!books.data || books.data.length === 0) return null;
+
+  return (
+    <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border">
+      <p className="text-sm font-semibold leading-tight">Dharam Bhai Study books</p>
+      <div className="mt-2 space-y-1.5">
+        {books.data.map((book) => (
+          <div key={book.id} className="rounded-xl bg-background px-3 py-2.5">
+            <p className="text-[13px] leading-tight">{book.title}</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              {[book.exam, book.class_name].filter(Boolean).join(" · ")}
+            </p>
+            {book.file_url ? (
+              <a
+                href={book.file_url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="press mt-2 inline-flex rounded-xl bg-foreground px-3 py-1.5 text-[11px] font-semibold text-background"
+              >
+                Open book
+              </a>
+            ) : null}
+          </div>
+        ))}
       </div>
     </div>
   );
