@@ -20,6 +20,7 @@ import { Route as LiveRouteImport } from './routes/live'
 import { Route as MyLearningRouteImport } from './routes/my-learning'
 import { Route as NeetRouteImport } from './routes/neet'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as CourseCourseIdRouteImport } from './routes/course.$courseId'
 import { Route as ApiAiDoubtRouteImport } from './routes/api/ai/doubt'
@@ -80,6 +81,11 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/my-learning': typeof MyLearningRoute
   '/neet': typeof NeetRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/course/$courseId': typeof CourseCourseIdRoute
   '/api/ai/doubt': typeof ApiAiDoubtRoute
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/my-learning': typeof MyLearningRoute
   '/neet': typeof NeetRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/course/$courseId': typeof CourseCourseIdRoute
   '/api/ai/doubt': typeof ApiAiDoubtRoute
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/my-learning': typeof MyLearningRoute
   '/neet': typeof NeetRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/course/$courseId': typeof CourseCourseIdRoute
   '/api/ai/doubt': typeof ApiAiDoubtRoute
@@ -167,6 +176,7 @@ export interface FileRouteTypes {
     | '/my-learning'
     | '/neet'
     | '/profile'
+    | '/reset-password'
     | '/search'
     | '/course/$courseId'
     | '/api/ai/doubt'
@@ -184,6 +194,7 @@ export interface FileRouteTypes {
     | '/my-learning'
     | '/neet'
     | '/profile'
+    | '/reset-password'
     | '/search'
     | '/course/$courseId'
     | '/api/ai/doubt'
@@ -201,6 +212,7 @@ export interface FileRouteTypes {
     | '/my-learning'
     | '/neet'
     | '/profile'
+    | '/reset-password'
     | '/search'
     | '/course/$courseId'
     | '/api/ai/doubt'
@@ -219,6 +231,7 @@ export interface RootRouteChildren {
   MyLearningRoute: typeof MyLearningRoute
   NeetRoute: typeof NeetRoute
   ProfileRoute: typeof ProfileRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SearchRoute: typeof SearchRoute
   CourseCourseIdRoute: typeof CourseCourseIdRoute
   ApiAiDoubtRoute: typeof ApiAiDoubtRoute
@@ -304,6 +317,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/search': {
       id: '/search'
       path: '/search'
@@ -347,6 +367,7 @@ const rootRouteChildren: RootRouteChildren = {
   MyLearningRoute: MyLearningRoute,
   NeetRoute: NeetRoute,
   ProfileRoute: ProfileRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SearchRoute: SearchRoute,
   CourseCourseIdRoute: CourseCourseIdRoute,
   ApiAiDoubtRoute: ApiAiDoubtRoute,
