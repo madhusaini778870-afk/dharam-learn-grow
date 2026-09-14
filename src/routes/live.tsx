@@ -45,6 +45,7 @@ function LiveScreen() {
     <Screen>
       <PageHeader title="Live Classes" subtitle="Today's schedule for your enrolled courses" />
       <div className="mt-4 space-y-3 px-5">
+        <AdminLiveClasses />
         {enrollments.isLoading ? <ListSkeleton count={2} /> : null}
         {enrollments.data && enrollments.data.length === 0 ? (
           <StateCard
@@ -106,6 +107,52 @@ function CourseSchedule({ courseId, title }: { courseId: string; title: string }
                 {item.startTime}
                 {item.endTime ? ` – ${item.endTime}` : ""}
               </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Live classes published by the Dharam Bhai Study admin. */
+function AdminLiveClasses() {
+  const classes = useQuery({
+    queryKey: ["live-classes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("admin_live_classes")
+        .select("id, title, subject, teacher, join_url, starts_at, exam")
+        .eq("enabled", true)
+        .order("starts_at", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  if (!classes.data || classes.data.length === 0) return null;
+
+  return (
+    <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border">
+      <p className="text-sm font-semibold leading-tight">Dharam Bhai Study live classes</p>
+      <div className="mt-2 space-y-1.5">
+        {classes.data.map((item) => (
+          <div key={item.id} className="rounded-xl bg-background px-3 py-2.5">
+            <p className="text-[13px] leading-tight">{item.title}</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              {[item.subject, item.teacher, item.starts_at ? new Date(item.starts_at).toLocaleString() : null]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+            {item.join_url ? (
+              <a
+                href={item.join_url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="press mt-2 inline-flex rounded-xl bg-foreground px-3 py-1.5 text-[11px] font-semibold text-background"
+              >
+                Join class
+              </a>
             ) : null}
           </div>
         ))}
