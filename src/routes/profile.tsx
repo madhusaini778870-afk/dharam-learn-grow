@@ -105,13 +105,34 @@ function ProfileScreen() {
           to="/my-learning"
           className="press flex items-center gap-3 rounded-3xl bg-card p-4 ring-1 ring-border"
         >
-          <span className="flex-1 text-sm font-medium">My Learning</span>
+          <span className="flex-1 text-sm font-medium">My Courses</span>
           <ChevronRight className="size-5 text-muted-foreground" />
         </Link>
 
         <button
           type="button"
+          onClick={openCommunityPopup}
+          className="press flex w-full items-center gap-3 rounded-3xl bg-card p-4 text-left ring-1 ring-border"
+        >
+          <span className="flex-1 text-sm font-medium">Community</span>
+          <ChevronRight className="size-5 text-muted-foreground" />
+        </button>
+
+        {isAdmin ? (
+          <Link
+            to="/admin"
+            className="press flex items-center gap-3 rounded-3xl bg-foreground p-4 text-background"
+          >
+            <span className="flex-1 text-sm font-semibold">Admin Portal</span>
+            <ChevronRight className="size-5 opacity-70" />
+          </Link>
+        ) : null}
+
+        <button
+          type="button"
           onClick={async () => {
+            await queryClient.cancelQueries();
+            queryClient.clear();
             await signOut();
             navigate({ to: "/auth", replace: true });
           }}
@@ -119,6 +140,7 @@ function ProfileScreen() {
         >
           Log out
         </button>
+
       </div>
       <Footer />
     </Screen>
