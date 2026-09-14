@@ -1,9 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { openCommunityPopup } from "@/components/community-popup";
 import { Screen, Footer, PageHeader, ChevronRight } from "@/components/app-shell";
+
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
