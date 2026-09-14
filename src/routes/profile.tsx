@@ -25,10 +25,13 @@ export const Route = createFileRoute("/profile")({
 
 function ProfileScreen() {
   const { session, loading, user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
