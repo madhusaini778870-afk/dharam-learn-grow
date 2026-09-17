@@ -9,8 +9,11 @@ Done
 - [x] Admin-added courses appear in the catalogue and open inside the app
 - [x] WhatsApp / Telegram popup driven by admin settings with cooldown
 
+Done (continued)
+- [x] Admin portal at /admin: dashboard, courses, lectures, notes, live classes, books, students, publish/unpublish — admin role checked in DB rules
+- [x] Forgot password + /reset-password screens, confirm-password on signup, friendly validation errors
+- [x] Admin role granted to madhusaini778870@gmail.com
+- [x] Community popup with WhatsApp + Telegram channels, Maybe Later dismissal, reopen from Profile
+
 Open
-- [ ] Admin panel screens (dashboard, add/edit courses, lectures, notes, hide/rename source batches, users, settings) — DB and access rules ready, UI not built
-- [ ] Forgot password + reset password screens, confirm-password field on signup
-- [ ] Assign the first admin account (needs the email to grant the admin role to)
 - [ ] Live/Books screens still read only the primary source; pwmarco + vidya-verse have no public data endpoint found yet
