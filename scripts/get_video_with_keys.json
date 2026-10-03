@@ -1,0 +1,8 @@
+{
+  "success": true,
+  "data": {
+    "url": "https://d1d34p8vz63oiq.cloudfront.net/b1085e9a-f937-4977-b5d7-5cbebd968318/master.mpd",
+    "signedUrl": "?Signature=Nb-lRJC00AvGMZW76WD7EoKZyUG4R1jYJGyy57Y7D7Wr9kuu0rKbtJ7MDiQ0fvldpUc3tyyVKVcWFBHUZ9gj4WFevTsmJ%7EbAiV-uyO%7EXwWXdOnRpN28C-rBbQQRH%7EiaVhZrqpvirkKW5T-o%7E2OGlMfDONTpiummtnw35SAnRglAZdLRogEKukwTd7PMnPJeVv%7En9f4O8Oa5L7QClHUv2yVrekXEZowYPOQHstejfEcQqvivCjsX20M2xe8l4sQKzaUGUhaH4L0jd0D4UmWnchklGZ2aBt7uHqP61qymLRH2IkBx2S0ORFiQLkbqsCJ4FFLHBBfpyZwwvTUzrhhYRUA__&Key-Pair-Id=APKAXVKMENFCRKTG5XE2&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9kMWQzNHA4dno2M29pcS5jbG91ZGZyb250Lm5ldC9iMTA4NWU5YS1mOTM3LTQ5NzctYjVkNy01Y2JlYmQ5NjgzMTgvKiIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc5MDE4NDY1Nn0sIkRhdGVHcmVhdGVyVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjozNzk3NTE2NDF9fX1dfQ__",
+    "clearKeys": { "fb132a1db65b513f669ad64d9f9e43b2": "8925cec5fe680041688fa26cc4aa1729" }
+  }
+}

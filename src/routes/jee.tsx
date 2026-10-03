@@ -7,10 +7,14 @@ export const Route = createFileRoute("/jee")({
       { title: "JEE Courses · Dharam Bhai Study" },
       {
         name: "description",
-        content: "Publicly listed JEE batches with subjects, chapters and lectures inside Dharam Bhai Study.",
+        content:
+          "Publicly listed JEE batches with subjects, chapters and lectures inside Dharam Bhai Study.",
       },
       { property: "og:title", content: "JEE Courses · Dharam Bhai Study" },
-      { property: "og:description", content: "Publicly listed JEE batches, chapters and lectures." },
+      {
+        property: "og:description",
+        content: "Publicly listed JEE batches, chapters and lectures.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

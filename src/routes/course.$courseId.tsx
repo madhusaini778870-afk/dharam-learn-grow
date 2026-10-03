@@ -11,7 +11,10 @@ export const Route = createFileRoute("/course/$courseId")({
           "Course subjects, chapters, lessons and notes from the authorized source. Enroll to unlock content.",
       },
       { property: "og:title", content: "Course details · Dharam Bhai Study" },
-      { property: "og:description", content: "Course chapters, lessons and notes. Enroll to unlock." },
+      {
+        property: "og:description",
+        content: "Course chapters, lessons and notes. Enroll to unlock.",
+      },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
     ],

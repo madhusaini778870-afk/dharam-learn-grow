@@ -1,0 +1,30 @@
+[
+  {
+    "token": "dhs_2e668a103944e8df41600e626bd3c046bec545e640238bcb1ca491244be69b9e",
+    "userId": "usr_1789300836456_f1180211",
+    "role": "student",
+    "createdAt": 1789300836528,
+    "expiresAt": 1791892836528
+  },
+  {
+    "token": "dhs_3b7ab576015d4b5129a4d5f0543c5dae171be8f876fce1caaa95b7d92fca4360",
+    "userId": "usr_1789300836456_f1180211",
+    "role": "admin",
+    "createdAt": 1790169164018,
+    "expiresAt": 1792761164018
+  },
+  {
+    "token": "dhs_fedabb19b635e5ecbbea519969f351b4cc417fd788dece166bb0487e7b196e27",
+    "userId": "usr_1789300836456_f1180211",
+    "role": "admin",
+    "createdAt": 1790170111785,
+    "expiresAt": 1792762111785
+  },
+  {
+    "token": "dhs_75e24aec4d2e91087b4ffff6a9561175e3502408c21f125d8d10e44de9258048",
+    "userId": "usr_1789300836456_f1180211",
+    "role": "admin",
+    "createdAt": 1790250997042,
+    "expiresAt": 1792842997042
+  }
+]

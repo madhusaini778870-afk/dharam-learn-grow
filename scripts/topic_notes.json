@@ -1,0 +1,472 @@
+{
+  "data": [
+    {
+      "_id": "69ff18a7ef0d5bb3113d55b1",
+      "isFree": false,
+      "status": "COMPLETED",
+      "date": "2026-05-11T00:00:00.000Z",
+      "startTime": "2026-05-11T12:45:00.000Z",
+      "isDPPNotes": false,
+      "homeworkIds": [
+        {
+          "_id": "6a01ef0fb9a30be431546b84",
+          "actions": ["Open", "Download", "Print"],
+          "topic": "Units and Measurement 13 : Class Notes || Physics By Rajwant Sir",
+          "note": "Class Notes",
+          "attachmentIds": [
+            {
+              "_id": "6a01ef0c6c4a24dd586b1d8c",
+              "baseUrl": "https://static.pw.live/",
+              "createdAt": "2026-05-11T15:00:28.106Z",
+              "key": "",
+              "name": "Units and Measurement 13 Class Notes.pdf"
+            }
+          ],
+          "batchSubjectId": "69b5698ee506a608ee297ed1",
+          "solutionVideoType": "none",
+          "solutionVideoUrl": null,
+          "slug": "units-and-measurement-13---class-notes-||-physics-by-rajwant-sir-862921",
+          "status": "Active"
+        }
+      ],
+      "dRoomId": "698b0d805d9c19a534801c30",
+      "isBatchDoubtEnabled": true,
+      "isSimulatedLecture": false,
+      "action": null,
+      "planId": null,
+      "visibleToLowerPlans": null
+    },
+    {
+      "_id": "69f9a5047723585488e1b20c",
+      "isFree": false,
+      "status": "COMPLETED",
+      "date": "2026-05-06T00:00:00.000Z",
+      "startTime": "2026-05-06T12:45:00.000Z",
+      "isDPPNotes": false,
+      "homeworkIds": [
+        {
+          "_id": "69fb56faafd0f99a3cc267aa",
+          "actions": ["Open", "Download", "Print"],
+          "topic": "Units and Measurement 12 : Class Notes || Physics By Rajwant Sir",
+          "note": "Class Notes",
+          "attachmentIds": [
+            {
+              "_id": "69fb56f7647686d4a76259c2",
+              "baseUrl": "https://static.pw.live/",
+              "createdAt": "2026-05-06T14:57:59.077Z",
+              "key": "",
+              "name": "Units and Measurement 12 Class Notes.pdf"
+            }
+          ],
+          "batchSubjectId": "69b5698ee506a608ee297ed1",
+          "solutionVideoType": "none",
+          "solutionVideoUrl": null,
+          "slug": "units-and-measurement-12---class-notes-||-physics-by-rajwant-sir-558985",
+          "status": "Active"
+        }
+      ],
+      "dRoomId": "698b0d805d9c19a534801c30",
+      "isBatchDoubtEnabled": true,
+      "isSimulatedLecture": false,
+      "action": null,
+      "planId": null,
+      "visibleToLowerPlans": null
+    },
+    {
+      "_id": "69e7171459bdb1058968f02d",
+      "isFree": false,
+      "status": "COMPLETED",
+      "date": "2026-05-05T00:00:00.000Z",
+      "startTime": "2026-05-05T12:45:00.000Z",
+      "isDPPNotes": false,
+      "homeworkIds": [
+        {
+          "_id": "69fa040ed73a86f86b04ca71",
+          "actions": ["Open", "Download", "Print"],
+          "topic": "Units and Measurement 11 : Class Notes || Physics By Rajwant Sir",
+          "note": "Class Notes",
+          "attachmentIds": [
+            {
+              "_id": "69fa0407f1afef3f4efef530",
+              "baseUrl": "https://static.pw.live/",
+              "createdAt": "2026-05-05T14:51:51.886Z",
+              "key": "",
+              "name": "Units and Measurement 11 Class Notes.pdf"
+            }
+          ],
+          "batchSubjectId": "69b5698ee506a608ee297ed1",
+          "solutionVideoType": "none",
+          "solutionVideoUrl": null,
+          "slug": "units-and-measurement-11---class-notes-||-physics-by-rajwant-sir-547445",
+          "status": "Active"
+        }
+      ],
+      "dRoomId": "698b0d805d9c19a534801c30",
+      "isBatchDoubtEnabled": true,
+      "isSimulatedLecture": false,
+      "action": null,
+      "planId": null,
+      "visibleToLowerPlans": null
+    },
+    {
+      "_id": "69e7171459bdb1058968f02c",
+      "isFree": false,
+      "status": "COMPLETED",
+      "date": "2026-05-04T00:00:00.000Z",
+      "startTime": "2026-05-04T12:45:00.000Z",
+      "isDPPNotes": false,
+      "homeworkIds": [
+        {
+          "_id": "69f8b11897cb0fdad795d074",
+          "actions": ["Open", "Download", "Print"],
+          "topic": "Units and Measurement 10 : Class Notes || Physics By Rajwant Sir",
+          "note": "Class Notes",
+          "attachmentIds": [
+            {
+              "_id": "69f8b118cd8108385f4a9c08",
+              "baseUrl": "https://static.pw.live/",
+              "createdAt": "2026-05-04T14:45:44.895Z",
+              "key": "",
+              "name": "Units and Measurement 10 : Class Notes.pdf"
+            }
+          ],
+          "batchSubjectId": "69b5698ee506a608ee297ed1",
+          "solutionVideoType": "none",
+          "solutionVideoUrl": "",
+          "slug": "units-and-measurement-10---class-notes-||-physics-by-rajwant-sir-523051",
+          "status": "Active"
+        }
+      ],
+      "dRoomId": "698b0d805d9c19a534801c30",
+      "isBatchDoubtEnabled": true,
+      "isSimulatedLecture": false,
+      "action": null,
+      "planId": null,
+      "visibleToLowerPlans": null
+    },
+    {
+      "_id": "69f4f0e1776354a5f9fa432a",
+      "isFree": false,
+      "status": "COMPLETED",
+      "date": "2026-05-02T00:00:00.000Z",
+      "startTime": "2026-05-02T10:30:00.000Z",
+      "isDPPNotes": false,
+      "homeworkIds": [
+        {
+          "_id": "69f5ed2efe679ccddb44a0cb",
+          "actions": ["Open", "Download", "Print"],
+          "topic": "Units and Measurement 09 : Class Notes || Physics By Rajwant Sir",
+          "note": "Class Notes",
+          "attachmentIds": [
+            {
+              "_id": "69f5ed2eee3ad9987840bc6d",
+              "baseUrl": "https://static.pw.live/",
+              "createdAt": "2026-05-02T12:25:18.592Z",
+              "key": "",
+              "name": "Units and Measurement 09 : Class Notes.pdf"
+            }
+          ],
+          "batchSubjectId": "69b5698ee506a608ee297ed1",
+          "solutionVideoType": "none",
+          "solutionVideoUrl": "",
+          "slug": "units-and-measurement-09---class-notes-||-physics-by-rajwant-sir-792469",
+          "status": "Active"
+        }
+      ],
+      "dRoomId": "698b0d805d9c19a534801c30",
+      "isBatchDoubtEnabled": true,
+      "isSimulatedLecture": false,
+      "action": null,
+      "planId": null,
+      "visibleToLowerPlans": null
+    },
+    {
+      "_id": "69e7171459bdb1058968f022",
+      "isFree": false,
+      "status": "COMPLETED",
+      "date": "2026-04-29T00:00:00.000Z",
+      "startTime": "2026-04-29T10:30:00.000Z",
+      "isDPPNotes": false,
+      "homeworkIds": [
+        {
+          "_id": "69f1f973eb9eebda375b26fb",
+          "actions": ["Open", "Download", "Print"],
+          "topic": "Units and Measurement 08 : Class Notes || Physics By Rajwant Sir",
+          "note": "Class Notes",
+          "attachmentIds": [
+            {
+              "_id": "69f1f96fac624b82d6180a2c",
+              "baseUrl": "https://static.pw.live/",
+              "createdAt": "2026-04-29T12:28:31.046Z",
+              "key": "",
+              "name": "Units and Measurement 08 Class Notes.pdf"
+            }
+          ],
+          "batchSubjectId": "69b5698ee506a608ee297ed1",
+          "solutionVideoType": "none",
+          "solutionVideoUrl": null,
+          "slug": "units-and-measurement-08---class-notes-||-physics-by-rajwant-sir-186334",
+          "status": "Active"
+        }
+      ],
+      "dRoomId": "698b0d805d9c19a534801c30",
+      "isBatchDoubtEnabled": true,
+      "isSimulatedLecture": false,
+      "action": null,
+      "planId": null,
+      "visibleToLowerPlans": null
+    },
+    {
+      "_id": "69e7171459bdb1058968f020",
+      "isFree": false,
+      "status": "COMPLETED",
+      "date": "2026-04-27T00:00:00.000Z",
+      "startTime": "2026-04-27T10:30:00.000Z",
+      "isDPPNotes": false,
+      "homeworkIds": [
+        {
+          "_id": "69ef57c61b1baf948476e90b",
+          "actions": ["Open", "Download", "Print"],
+          "topic": "Units and Measurement 07 : Class Notes || Physics By Rajwant Sir",
+          "note": "Class Notes",
+          "attachmentIds": [
+            {
+              "_id": "69ef57c05974da1a5691072b",
+              "baseUrl": "https://static.pw.live/",
+              "createdAt": "2026-04-27T12:34:08.875Z",
+              "key": "",
+              "name": "Units and Measurement 07 Class Notes.pdf"
+            }
+          ],
+          "batchSubjectId": "69b5698ee506a608ee297ed1",
+          "solutionVideoType": "none",
+          "solutionVideoUrl": null,
+          "slug": "units-and-measurement-07---class-notes-||-physics-by-rajwant-sir-566576",
+          "status": "Active"
+        }
+      ],
+      "dRoomId": "698b0d805d9c19a534801c30",
+      "isBatchDoubtEnabled": true,
+      "isSimulatedLecture": false,
+      "action": null,
+      "planId": null,
+      "visibleToLowerPlans": null
+    },
+    {
+      "_id": "69e7171459bdb1058968f01c",
+      "isFree": false,
+      "status": "COMPLETED",
+      "date": "2026-04-24T00:00:00.000Z",
+      "startTime": "2026-04-24T10:30:00.000Z",
+      "isDPPNotes": false,
+      "homeworkIds": [
+        {
+          "_id": "69eb635ceffb85ead0331f57",
+          "actions": ["Open", "Download", "Print"],
+          "topic": "Units and Measurement 06 : Class Notes || Physics by Rajwant Sir",
+          "note": "Class Notes",
+          "attachmentIds": [
+            {
+              "_id": "69eb634fbad235a7fe6158f2",
+              "baseUrl": "https://static.pw.live/",
+              "createdAt": "2026-04-24T12:34:23.373Z",
+              "key": "",
+              "name": "Units and Measurement 06 Class Notes.pdf"
+            }
+          ],
+          "batchSubjectId": "69b5698ee506a608ee297ed1",
+          "solutionVideoType": "none",
+          "solutionVideoUrl": null,
+          "slug": "units-and-measurement-06---class-notes-||-physics-by-rajwant-sir-327094",
+          "status": "Active"
+        }
+      ],
+      "dRoomId": "698b0d805d9c19a534801c30",
+      "isBatchDoubtEnabled": true,
+      "isSimulatedLecture": false,
+      "action": null,
+      "planId": null,
+      "visibleToLowerPlans": null
+    },
+    {
+      "_id": "69e7171459bdb1058968f01b",
+      "isFree": false,
+      "status": "COMPLETED",
+      "date": "2026-04-22T00:00:00.000Z",
+      "startTime": "2026-04-22T10:30:00.000Z",
+      "isDPPNotes": false,
+      "homeworkIds": [
+        {
+          "_id": "69e8be40be07763ab49b197b",
+          "actions": ["Open", "Download", "Print"],
+          "topic": "Units and Measurement 05 : Class Notes || Physics by Rajwant Sir",
+          "note": "Class Notes",
+          "attachmentIds": [
+            {
+              "_id": "69e8be3c1a4b91ff5eca7a13",
+              "baseUrl": "https://static.pw.live/",
+              "createdAt": "2026-04-22T12:25:32.216Z",
+              "key": "",
+              "name": "Units and Measurement 05 Class Notes.pdf"
+            }
+          ],
+          "batchSubjectId": "69b5698ee506a608ee297ed1",
+          "solutionVideoType": "none",
+          "solutionVideoUrl": null,
+          "slug": "units-and-measurement-05---class-notes-||-physics-by-rajwant-sir-840030",
+          "status": "Active"
+        }
+      ],
+      "dRoomId": "698b0d805d9c19a534801c30",
+      "isBatchDoubtEnabled": true,
+      "isSimulatedLecture": false,
+      "action": null,
+      "planId": null,
+      "visibleToLowerPlans": null
+    },
+    {
+      "_id": "69e595902715bc04ca450fff",
+      "isFree": false,
+      "status": "COMPLETED",
+      "date": "2026-04-20T00:00:00.000Z",
+      "startTime": "2026-04-20T10:30:00.000Z",
+      "isDPPNotes": false,
+      "homeworkIds": [
+        {
+          "_id": "69e61d935e9089245687b52d",
+          "actions": ["Open", "Download", "Print"],
+          "topic": "Units and Measurement 04 : Class Notes || Physics by Rajwant Sir",
+          "note": "Class Notes",
+          "attachmentIds": [
+            {
+              "_id": "69e61d8bf0026af7f6f299fa",
+              "baseUrl": "https://static.pw.live/",
+              "createdAt": "2026-04-20T12:35:23.907Z",
+              "key": "",
+              "name": "Units and Measurement 04 Class Notes.pdf"
+            }
+          ],
+          "batchSubjectId": "69b5698ee506a608ee297ed1",
+          "solutionVideoType": "none",
+          "solutionVideoUrl": null,
+          "slug": "units-and-measurement-04---class-notes-||-physics-by-rajwant-sir-892679",
+          "status": "Active"
+        }
+      ],
+      "dRoomId": "698b0d805d9c19a534801c30",
+      "isBatchDoubtEnabled": true,
+      "isSimulatedLecture": false,
+      "action": null,
+      "planId": null,
+      "visibleToLowerPlans": null
+    },
+    {
+      "_id": "69da6c2f564d49bccfcff794",
+      "isFree": false,
+      "status": "COMPLETED",
+      "date": "2026-04-15T00:00:00.000Z",
+      "startTime": "2026-04-15T10:30:00.000Z",
+      "isDPPNotes": false,
+      "homeworkIds": [
+        {
+          "_id": "69df85ae09cdc40cadd73121",
+          "actions": ["Open", "Download", "Print"],
+          "topic": "Units and Measurement 03 : Class Notes || Physics by Rajwant Sir",
+          "note": "Class Notes",
+          "attachmentIds": [
+            {
+              "_id": "69df85a84c114f726b2e375a",
+              "baseUrl": "https://static.pw.live/",
+              "createdAt": "2026-04-15T12:33:44.454Z",
+              "key": "",
+              "name": "Units and Measurement 03 Class Notes.pdf"
+            }
+          ],
+          "batchSubjectId": "69b5698ee506a608ee297ed1",
+          "solutionVideoType": "none",
+          "solutionVideoUrl": null,
+          "slug": "units-and-measurement-03---class-notes-||-physics-by-rajwant-sir-627645",
+          "status": "Active"
+        }
+      ],
+      "dRoomId": "698b0d805d9c19a534801c30",
+      "isBatchDoubtEnabled": true,
+      "isSimulatedLecture": false,
+      "action": null,
+      "planId": null,
+      "visibleToLowerPlans": null
+    },
+    {
+      "_id": "69da6c2f564d49bccfcff79b",
+      "isFree": false,
+      "status": "COMPLETED",
+      "date": "2026-04-14T00:00:00.000Z",
+      "startTime": "2026-04-14T12:45:00.000Z",
+      "isDPPNotes": false,
+      "homeworkIds": [
+        {
+          "_id": "69de53bb5685d54f9b3b5644",
+          "actions": ["Open", "Download", "Print"],
+          "topic": "Units and Measurement 02 : Class Notes || Physics by Rajwant Sir",
+          "note": "Class Notes",
+          "attachmentIds": [
+            {
+              "_id": "69de53b97b167b1f9e411049",
+              "baseUrl": "https://static.pw.live/",
+              "createdAt": "2026-04-14T14:48:25.332Z",
+              "key": "",
+              "name": "Units and Measurement 02 Class Notes.pdf"
+            }
+          ],
+          "batchSubjectId": "69b5698ee506a608ee297ed1",
+          "solutionVideoType": "none",
+          "solutionVideoUrl": null,
+          "slug": "units-and-measurement-02---class-notes-||-physics-by-rajwant-sir-498888",
+          "status": "Active"
+        }
+      ],
+      "dRoomId": "698b0d805d9c19a534801c30",
+      "isBatchDoubtEnabled": true,
+      "isSimulatedLecture": false,
+      "action": null,
+      "planId": null,
+      "visibleToLowerPlans": null
+    },
+    {
+      "_id": "69dce295b4ecb06768828339",
+      "isFree": true,
+      "status": "PENDING",
+      "date": "2026-04-13T00:00:00.000Z",
+      "startTime": "2026-04-13T10:30:00.000Z",
+      "isDPPNotes": false,
+      "homeworkIds": [
+        {
+          "_id": "69dce212b4ecb06768828046",
+          "actions": ["Open", "Download", "Print"],
+          "topic": "Units and Measurement 01 : Class Notes || Physics By Rajwant Sir",
+          "note": "Class Notes",
+          "attachmentIds": [
+            {
+              "_id": "69dce20c950fac8a59d9e0e6",
+              "baseUrl": "https://static.pw.live/",
+              "createdAt": "2026-04-13T12:31:08.408Z",
+              "key": "5eb393ee95fab7468a79d189/ADMIN/ab83defc-eb7c-4886-9708-2c7c2438a78a.pdf",
+              "name": "Units and Measurement 01 Class Notes.pdf"
+            }
+          ],
+          "batchSubjectId": "69b5698ee506a608ee297ed1",
+          "solutionVideoType": "none",
+          "solutionVideoUrl": null,
+          "slug": "units-and-measurement-01---class-notes-||-physics-by-rajwant-sir-387176",
+          "status": "Active"
+        }
+      ],
+      "dRoomId": "698b0d805d9c19a534801c30",
+      "isBatchDoubtEnabled": true,
+      "isSimulatedLecture": false,
+      "action": null,
+      "planId": null,
+      "visibleToLowerPlans": null
+    }
+  ]
+}

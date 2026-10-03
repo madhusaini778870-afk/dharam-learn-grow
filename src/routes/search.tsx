@@ -13,7 +13,8 @@ export const Route = createFileRoute("/search")({
       { title: "Search Courses · Dharam Bhai Study" },
       {
         name: "description",
-        content: "Search every publicly listed batch by name, exam or class inside Dharam Bhai Study.",
+        content:
+          "Search every publicly listed batch by name, exam or class inside Dharam Bhai Study.",
       },
       { property: "og:title", content: "Search Courses · Dharam Bhai Study" },
       { property: "og:description", content: "Search courses by name, exam or class." },

@@ -7,10 +7,14 @@ export const Route = createFileRoute("/neet")({
       { title: "NEET Courses · Dharam Bhai Study" },
       {
         name: "description",
-        content: "Publicly listed NEET batches with subjects, chapters and lectures inside Dharam Bhai Study.",
+        content:
+          "Publicly listed NEET batches with subjects, chapters and lectures inside Dharam Bhai Study.",
       },
       { property: "og:title", content: "NEET Courses · Dharam Bhai Study" },
-      { property: "og:description", content: "Publicly listed NEET batches, chapters and lectures." },
+      {
+        property: "og:description",
+        content: "Publicly listed NEET batches, chapters and lectures.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

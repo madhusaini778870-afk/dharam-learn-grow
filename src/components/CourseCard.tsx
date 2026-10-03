@@ -2,20 +2,18 @@ import { Link } from "@tanstack/react-router";
 import { LockIcon } from "@/components/app-shell";
 import type { NormalizedCourse } from "@/services/courseNormalizer";
 
-export function CourseCard({
-  course,
-  enrolled,
-}: {
-  course: NormalizedCourse;
-  enrolled?: boolean;
-}) {
+export function CourseCard({ course, enrolled }: { course: NormalizedCourse; enrolled?: boolean }) {
+  if (!course) return null;
+
+  const subjects = Array.isArray(course.subjects) ? course.subjects : [];
+  const chapters = Array.isArray(course.chapters) ? course.chapters : [];
+  const lessons = Array.isArray(course.lessons) ? course.lessons : [];
+  const notes = Array.isArray(course.notes) ? course.notes : [];
+  const teachers = Array.isArray(course.teachers) ? course.teachers : [];
+
   const chips = Array.from(
-    new Set(
-      [course.category, course.className, ...course.subjects.slice(0, 2)].filter(
-        (chip): chip is string => Boolean(chip),
-      ),
-    ),
-  );
+    new Set([course.category, course.className, ...subjects.slice(0, 2)].filter(Boolean)),
+  ) as string[];
 
   return (
     <div className="animate-rise rounded-3xl bg-card p-3 ring-1 ring-border">
@@ -48,7 +46,9 @@ export function CourseCard({
             ))}
           </div>
 
-          <p className="mt-1.5 font-display text-[17px] leading-tight text-balance">{course.title}</p>
+          <p className="mt-1.5 font-display text-[17px] leading-tight text-balance">
+            {course.title}
+          </p>
 
           {course.description ? (
             <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-muted-foreground">
@@ -58,10 +58,10 @@ export function CourseCard({
 
           <p className="mt-1.5 text-[11px] text-muted-foreground">
             {[
-              course.chapters.length ? `${course.chapters.length} chapters` : null,
-              course.lessons.length ? `${course.lessons.length} lessons` : null,
-              course.notes.length ? `${course.notes.length} notes` : null,
-              course.teachers.length ? course.teachers.slice(0, 2).join(", ") : null,
+              chapters.length ? `${chapters.length} chapters` : null,
+              lessons.length ? `${lessons.length} lessons` : null,
+              notes.length ? `${notes.length} notes` : null,
+              teachers.length ? teachers.slice(0, 2).join(", ") : null,
             ]
               .filter(Boolean)
               .join(" · ")}

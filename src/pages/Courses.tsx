@@ -1,19 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { fetchCourses } from "@/services/courseApi";
-import { applyOverrides, loadAdminCourses, loadOverrides } from "@/services/adminCatalog";
-import { CATEGORIES, matchesQuery, type Category } from "@/services/courseNormalizer";
+import { CATEGORIES, type Category } from "@/services/courseNormalizer";
 import { CourseCard } from "@/components/CourseCard";
 import { Screen, Footer, PageHeader, SearchIcon } from "@/components/app-shell";
 import { ListSkeleton, RetryButton, StateCard } from "@/components/states";
-
+import { AddBatchDialog } from "@/components/AddBatchDialog";
+import { Plus, Sparkles, ExternalLink } from "lucide-react";
 
 export function CoursesPage({
   category,
   onCategoryChange,
-  title = "All Courses",
-  subtitle = "Publicly listed batches from the connected source",
+  title = "Vidyaverse Courses",
+  subtitle = "High-definition video lectures & courses from https://vidya-verse.ai.studio/",
   lockedCategory = false,
 }: {
   category: Category | undefined;
@@ -23,8 +23,10 @@ export function CoursesPage({
   lockedCategory?: boolean;
 }) {
   const loadCourses = useServerFn(fetchCourses);
+  const selectedSource = "vidyaverse";
   const [term, setTerm] = useState("");
   const [query, setQuery] = useState("");
+  const [addBatchOpen, setAddBatchOpen] = useState(false);
   const sentinel = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -33,50 +35,43 @@ export function CoursesPage({
   }, [term]);
 
   const catalog = useInfiniteQuery({
-    queryKey: ["courses", query, category ?? "all"],
+    queryKey: ["infinite-courses", query, category ?? "all", selectedSource],
     initialPageParam: 1,
     queryFn: ({ pageParam }) =>
       loadCourses({
-        data: category
-          ? { q: query, category, cursor: pageParam as number }
-          : { q: query, cursor: pageParam as number },
+        data: {
+          q: query,
+          cursor: pageParam as number,
+          source: selectedSource,
+          ...(category ? { category } : {}),
+        },
       }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    getNextPageParam: (lastPage) => lastPage?.nextCursor ?? undefined,
     retry: false,
     staleTime: 5 * 60_000,
   });
 
-  // Courses added inside Dharam Bhai Study by an admin, plus the admin's
-  // hide/rename decisions for courses coming from the public source.
-  const added = useQuery({
-    queryKey: ["admin-courses"],
-    queryFn: loadAdminCourses,
-    staleTime: 60_000,
-  });
-  const overrides = useQuery({
-    queryKey: ["course-overrides"],
-    queryFn: loadOverrides,
-    staleTime: 60_000,
-  });
-
   const courses = useMemo(() => {
-    const fromSource = applyOverrides(
-      catalog.data?.pages.flatMap((page) => page.courses) ?? [],
-      overrides.data,
-    );
-    const fromAdmin = (added.data ?? []).filter(
-      (course) =>
-        (!category || course.category === category) && matchesQuery(course, query),
-    );
-    return [...fromAdmin, ...fromSource];
-  }, [catalog.data, overrides.data, added.data, category, query]);
-  const failed = catalog.data?.pages.some((page) => page.state.status === "error") ?? false;
+    if (!catalog.data?.pages || !Array.isArray(catalog.data.pages)) return [];
+    return catalog.data.pages
+      .filter((page): page is NonNullable<typeof page> => Boolean(page))
+      .flatMap((page) => (Array.isArray(page?.courses) ? page.courses : []))
+      .filter((course): course is NonNullable<typeof course> => Boolean(course && course.id));
+  }, [catalog.data]);
+
+  const failed = Array.isArray(catalog.data?.pages)
+    ? catalog.data.pages.some((page) => page?.state?.status === "error")
+    : false;
 
   useEffect(() => {
     const node = sentinel.current;
     if (!node) return;
     const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting) && catalog.hasNextPage && !catalog.isFetchingNextPage) {
+      if (
+        entries.some((entry) => entry.isIntersecting) &&
+        catalog.hasNextPage &&
+        !catalog.isFetchingNextPage
+      ) {
         void catalog.fetchNextPage();
       }
     });
@@ -89,14 +84,52 @@ export function CoursesPage({
       <PageHeader title={title} subtitle={subtitle} />
 
       <div className="px-5">
-        <div className="mt-4 flex items-center gap-2.5 rounded-2xl bg-card px-3.5 py-3 ring-1 ring-border">
-          <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
-          <input
-            value={term}
-            onChange={(event) => setTerm(event.target.value)}
-            placeholder="Search all courses…"
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-          />
+        {/* Source Info Banner */}
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted/40 p-2.5 text-[11px] text-muted-foreground ring-1 ring-border/40">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="font-semibold text-foreground">Verified Source:</span>
+            <a
+              href="https://vidya-verse.ai.studio/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-semibold text-sky-500 dark:text-sky-400 hover:underline"
+            >
+              <span>Vidyaverse (Selection Way)</span>
+              <ExternalLink className="size-2.5" />
+            </a>
+            <span className="rounded bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-bold text-sky-500">
+              Direct HLS &amp; MP4 Streams
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAddBatchOpen(true)}
+            className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary hover:bg-primary/20 active:scale-95 transition"
+          >
+            <Plus className="size-3" />
+            <span>Add Batch / URL</span>
+          </button>
+        </div>
+
+        <div className="mt-3 flex items-center gap-2">
+          <div className="flex flex-1 items-center gap-2.5 rounded-2xl bg-card px-3.5 py-3 ring-1 ring-border focus-within:ring-primary transition">
+            <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
+            <input
+              value={term}
+              onChange={(event) => setTerm(event.target.value)}
+              placeholder="Search courses, teachers (Gagan Sir, Aman Sir...) or topics…"
+              className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setAddBatchOpen(true)}
+            title="Add Batch from Vidyaverse or PW Gemtara"
+            className="flex items-center gap-1.5 rounded-2xl bg-primary px-3.5 py-3 text-xs font-semibold text-primary-foreground shadow-xs hover:opacity-90 active:scale-95 transition shrink-0"
+          >
+            <Plus className="size-4" />
+            <span className="hidden sm:inline">Add Batch</span>
+          </button>
         </div>
 
         {lockedCategory ? null : (
@@ -125,14 +158,14 @@ export function CoursesPage({
             />
           ) : null}
 
-          {!catalog.isLoading && !catalog.isError && !failed && courses.length === 0 ? (
+          {!catalog.isLoading && !catalog.isError && !failed && (courses?.length ?? 0) === 0 ? (
             <StateCard
               title="No matching courses"
               body="Nothing published matches this category or search."
             />
           ) : null}
 
-          {courses.map((course) => (
+          {(courses ?? []).map((course) => (
             <CourseCard key={course.id} course={course} />
           ))}
 
@@ -152,20 +185,13 @@ export function CoursesPage({
           ) : null}
         </div>
       </div>
+      <AddBatchDialog open={addBatchOpen} onOpenChange={setAddBatchOpen} />
       <Footer />
     </Screen>
   );
 }
 
-function Chip({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
+function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <button
       type="button"

@@ -1,0 +1,166 @@
+{
+  "settings": {
+    "primarySourceUrl": "https://pw.gemtara.in/",
+    "batchListingUrl": "https://pw.gemtara.in/study/batches",
+    "additionalSourceUrl": "",
+    "whatsappChannelUrl": "https://whatsapp.com/channel/0029VbB3XKSK0IBqD72ndg2i",
+    "telegramChannelUrl": "https://t.me/mrlokygamer"
+  },
+  "disabledCourseIds": [],
+  "disabledBatchIds": [],
+  "customCourses": [
+    {
+      "id": "custom-jee-rankers-2026",
+      "title": "JEE Super Rankers 2026 Batch",
+      "exam": "JEE",
+      "category": "JEE",
+      "className": "Class 12",
+      "description": "Exclusive complete revision batch covering Physics, Chemistry, and Mathematics with top faculty lectures, notes, and rank-boosting strategy.",
+      "thumbnail": "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=800&auto=format&fit=crop&q=80",
+      "enabled": true,
+      "source": "source1",
+      "sourceLabel": "Dharam Bhai Study",
+      "subjects": ["Physics", "Chemistry", "Mathematics"],
+      "subjectRefs": [
+        {
+          "id": "sub-phy",
+          "name": "Physics",
+          "lectureCount": 12,
+          "teachers": ["Lakshya Prince", "H.C. Verma Experts"]
+        },
+        {
+          "id": "sub-chem",
+          "name": "Chemistry",
+          "lectureCount": 14,
+          "teachers": ["Lakshya Prince", "Senior Faculty"]
+        },
+        {
+          "id": "sub-math",
+          "name": "Mathematics",
+          "lectureCount": 15,
+          "teachers": ["Lakshya Prince", "IITian Mentors"]
+        }
+      ]
+    },
+    {
+      "id": "custom-neet-toppers-2026",
+      "title": "NEET Rank Booster 2026",
+      "exam": "NEET",
+      "category": "NEET",
+      "className": "Class 12",
+      "description": "Comprehensive NCERT-focused Biology, Chemistry, and Physics revision with video masterclasses and complete chapter PDFs.",
+      "thumbnail": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=80",
+      "enabled": true,
+      "source": "source1",
+      "sourceLabel": "Dharam Bhai Study",
+      "subjects": ["Biology", "Physics", "Chemistry"],
+      "subjectRefs": [
+        {
+          "id": "sub-bio",
+          "name": "Biology",
+          "lectureCount": 18,
+          "teachers": ["Lakshya Prince", "Top Medical Faculty"]
+        },
+        {
+          "id": "sub-phy-neet",
+          "name": "Physics",
+          "lectureCount": 12,
+          "teachers": ["Senior Faculty"]
+        },
+        {
+          "id": "sub-chem-neet",
+          "name": "Chemistry",
+          "lectureCount": 14,
+          "teachers": ["NCERT Master Mentors"]
+        }
+      ]
+    }
+  ],
+  "customBatches": [],
+  "customLectures": [
+    {
+      "id": "lec-phy-01",
+      "courseId": "custom-jee-rankers-2026",
+      "subjectId": "sub-phy",
+      "chapterId": "chap-phy-01",
+      "title": "Kinematics & Projectile Motion - Complete Masterclass",
+      "order": 1,
+      "videoUrl": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "notesUrl": "https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/432dceec-d008-4929-af5c-cdb9f974d5e2.pdf",
+      "durationSeconds": 3600
+    },
+    {
+      "id": "lec-math-01",
+      "courseId": "custom-jee-rankers-2026",
+      "subjectId": "sub-math",
+      "chapterId": "chap-math-01",
+      "title": "Logarithm & Modulus Inequalities - Full Concept & Tricks",
+      "order": 1,
+      "videoUrl": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "notesUrl": "https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/432dceec-d008-4929-af5c-cdb9f974d5e2.pdf",
+      "durationSeconds": 4200
+    },
+    {
+      "id": "lec-bio-01",
+      "courseId": "custom-neet-toppers-2026",
+      "subjectId": "sub-bio",
+      "chapterId": "chap-bio-01",
+      "title": "Cell: The Unit of Life - NCERT Line by Line Analysis",
+      "order": 1,
+      "videoUrl": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "notesUrl": "https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/432dceec-d008-4929-af5c-cdb9f974d5e2.pdf",
+      "durationSeconds": 3900
+    }
+  ],
+  "customNotes": [
+    {
+      "id": "note-phy-01",
+      "courseId": "custom-jee-rankers-2026",
+      "chapterId": "chap-phy-01",
+      "title": "Kinematics Formula Sheet & Top 50 PYQs",
+      "url": "https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/432dceec-d008-4929-af5c-cdb9f974d5e2.pdf"
+    },
+    {
+      "id": "note-math-01",
+      "courseId": "custom-jee-rankers-2026",
+      "chapterId": "chap-math-01",
+      "title": "Algebra & Logarithm Hand-written Revision Notes",
+      "url": "https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/432dceec-d008-4929-af5c-cdb9f974d5e2.pdf"
+    }
+  ],
+  "users": [
+    {
+      "id": "student-01",
+      "name": "Aryan Sharma",
+      "email": "aryan.jee2026@gmail.com",
+      "target": "JEE 2026",
+      "enrolledCount": 4,
+      "completedLectures": 28,
+      "progressPercent": 65,
+      "status": "active",
+      "joinedDate": "2026-08-10"
+    },
+    {
+      "id": "student-02",
+      "name": "Pooja Verma",
+      "email": "pooja.neet2026@gmail.com",
+      "target": "NEET 2026",
+      "enrolledCount": 3,
+      "completedLectures": 34,
+      "progressPercent": 82,
+      "status": "active",
+      "joinedDate": "2026-08-15"
+    },
+    {
+      "id": "student-03",
+      "name": "Rohan Patel",
+      "email": "rohan.patel99@gmail.com",
+      "target": "JEE 2026",
+      "enrolledCount": 2,
+      "completedLectures": 12,
+      "progressPercent": 40,
+      "status": "active",
+      "joinedDate": "2026-09-01"
+    }
+  ]
+}

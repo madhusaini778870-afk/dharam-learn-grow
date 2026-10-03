@@ -1,0 +1,6 @@
+{
+  "name": "Dharam Bhai Study",
+  "description": "Mobile-first JEE and NEET learning platform with courses, notes, video lessons, and AI doubt solver.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

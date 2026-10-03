@@ -1,141 +1,257 @@
-import { useEffect } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
+import { studentStore, type StoredEnrollment, type BookmarkItem } from "@/services/studentStore";
 import { Screen, Footer, PageHeader, ChevronRight } from "@/components/app-shell";
-import { ListSkeleton, RetryButton, StateCard } from "@/components/states";
+import { AddBatchDialog } from "@/components/AddBatchDialog";
+import {
+  BookOpen,
+  CheckCircle,
+  Trash2,
+  LogIn,
+  GraduationCap,
+  Bookmark,
+  Play,
+  Plus,
+} from "lucide-react";
 
-/** Only courses the student explicitly enrolled in, stored on their account. */
+/** Courses the student enrolled in, strictly isolated to the authenticated user. */
 export function MyCoursesPage() {
-  const { session, loading, user } = useAuth();
-  const navigate = useNavigate();
+  const { session, user, loading } = useAuth();
+  const [enrolledList, setEnrolledList] = useState<StoredEnrollment[]>(
+    () => studentStore.getEnrollments() ?? [],
+  );
+  const [bookmarks, setBookmarks] = useState<BookmarkItem[]>(
+    () => studentStore.getBookmarks() ?? [],
+  );
+  const [addBatchOpen, setAddBatchOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && !session) navigate({ to: "/auth", replace: true });
-  }, [loading, session, navigate]);
+    studentStore.syncUserData().then(() => {
+      setEnrolledList(studentStore.getEnrollments() ?? []);
+      setBookmarks(studentStore.getBookmarks() ?? []);
+    });
 
-  const enrollments = useQuery({
-    queryKey: ["enrollments", user?.id],
-    enabled: Boolean(user?.id),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("enrollments")
-        .select(
-          "id, course_id, course_title, exam, thumbnail_url, created_at, last_lesson_id, last_lesson_title, last_subject_id, last_chapter_id",
-        )
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
+    const handleUpdate = () => {
+      setEnrolledList(studentStore.getEnrollments() ?? []);
+    };
+    const handleBookmarks = () => {
+      setBookmarks(studentStore.getBookmarks() ?? []);
+    };
+    window.addEventListener("dharam_enrollments_updated", handleUpdate);
+    window.addEventListener("dharam_bookmarks_updated", handleBookmarks);
+    return () => {
+      window.removeEventListener("dharam_enrollments_updated", handleUpdate);
+      window.removeEventListener("dharam_bookmarks_updated", handleBookmarks);
+    };
+  }, [user]);
 
-  const progress = useQuery({
-    queryKey: ["progress", user?.id],
-    enabled: Boolean(user?.id),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lesson_progress")
-        .select("course_id, lesson_id, completed");
-      if (error) throw error;
-      return data;
-    },
-  });
+  // Protected feature: require login for My Courses
+  if (!loading && !session) {
+    return (
+      <Screen>
+        <PageHeader title="My Courses" back="/home" />
+        <div className="mt-8 px-5">
+          <div className="rounded-3xl bg-card p-6 text-center ring-1 ring-border shadow-sm">
+            <div className="mx-auto grid size-16 place-items-center rounded-3xl bg-muted text-muted-foreground">
+              <GraduationCap className="size-8" />
+            </div>
+            <h2 className="mt-4 font-display text-xl font-bold">Sign in to view My Courses</h2>
+            <p className="mt-1.5 text-xs text-muted-foreground max-w-xs mx-auto">
+              Your enrolled batches, chapter progress, and last-watched positions are securely saved
+              to your account.
+            </p>
+            <Link
+              to="/auth"
+              search={{ redirect: "/my-learning" }}
+              className="press mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-md"
+            >
+              <LogIn className="size-4" />
+              <span>Sign In / Create Account</span>
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </Screen>
+    );
+  }
+
+  const handleUnenroll = async (courseId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await studentStore.unenrollCourse(courseId);
+    setEnrolledList(studentStore.getEnrollments());
+  };
 
   return (
     <Screen>
-      <PageHeader
-        title="My Courses"
-        subtitle={enrollments.data ? `${enrollments.data.length} enrolled` : "Your enrolled courses"}
-      />
+      <PageHeader title="My Courses" back="/home" />
 
-      <div className="mt-4 space-y-3 px-5">
-        {enrollments.isLoading ? <ListSkeleton count={2} /> : null}
-        {enrollments.isError ? (
-          <StateCard
-            title="Couldn't load your courses"
-            body="We couldn't reach your account data. Please try again."
-            action={<RetryButton onClick={() => enrollments.refetch()} />}
-          />
-        ) : null}
-        {enrollments.data?.length === 0 ? (
-          <StateCard
-            title="No enrolled courses yet"
-            body="Browse the catalog and press Enroll to see a course here."
-            action={
+      <div className="px-5 pt-4 pb-24 space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Enrolled Batches ({enrolledList.length})
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setAddBatchOpen(true)}
+              className="inline-flex items-center gap-1 rounded-xl bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/20 active:scale-95 transition"
+            >
+              <Plus className="size-3" />
+              <span>Add Batch</span>
+            </button>
+            <Link to="/courses" className="text-xs font-semibold text-primary hover:underline">
+              Browse More →
+            </Link>
+          </div>
+        </div>
+
+        {enrolledList.length === 0 ? (
+          <div className="rounded-3xl bg-card p-6 text-center ring-1 ring-border shadow-xs">
+            <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
+              <BookOpen className="size-7" />
+            </div>
+            <p className="mt-3 font-display text-base font-bold">No enrolled courses yet</p>
+            <p className="mt-1 text-xs text-muted-foreground max-w-xs mx-auto">
+              Explore Physics Wallah batches or add any batch link directly from
+              pw.gemtara.in/study/batches to start tracking your progress.
+            </p>
+            <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setAddBatchOpen(true)}
+                className="press inline-flex items-center gap-1.5 rounded-2xl bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground shadow-xs hover:opacity-90 transition"
+              >
+                <Plus className="size-3.5" />
+                <span>Add Batch from pw.gemtara.in</span>
+              </button>
               <Link
                 to="/courses"
-                search={{ category: undefined }}
-                className="press inline-flex rounded-2xl bg-foreground px-5 py-2.5 text-sm font-semibold text-background"
+                className="press inline-flex items-center gap-1.5 rounded-2xl bg-muted px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/80 transition"
               >
-                Browse courses
+                <span>Explore All Batches</span>
               </Link>
-            }
-          />
-        ) : null}
-
-        {enrollments.data?.map((item) => {
-          const rows = progress.data?.filter((row) => row.course_id === item.course_id) ?? [];
-          const done = rows.filter((row) => row.completed).length;
-          const percent = rows.length > 0 ? Math.round((done / rows.length) * 100) : 0;
-          return (
-            <div key={item.id} className="rounded-3xl bg-card p-3 ring-1 ring-border">
-            <Link
-              to="/course/$courseId"
-              params={{ courseId: item.course_id }}
-              className="press flex items-center gap-3"
-            >
-              {item.thumbnail_url ? (
-                <img
-                  src={item.thumbnail_url}
-                  alt={item.course_title}
-                  loading="lazy"
-                  className="size-16 shrink-0 rounded-xl object-cover ring-1 ring-border"
-                />
-              ) : (
-                <div className="grid size-16 shrink-0 place-items-center rounded-xl bg-muted text-center text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
-                  No cover
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                {item.exam ? (
-                  <span className="rounded-md bg-lamp/15 px-2 py-0.5 text-[10px] font-semibold text-lamp-deep">
-                    {item.exam}
-                  </span>
-                ) : null}
-                <p className="mt-1 font-display text-[16px] leading-tight">{item.course_title}</p>
-                {rows.length > 0 ? (
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">
-                    {done} of {rows.length} lessons completed
-                  </p>
-                ) : null}
-              </div>
-              <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
-            </Link>
-
-            {rows.length > 0 ? (
-              <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-muted">
-                <div className="h-full rounded-full bg-pine" style={{ width: `${percent}%` }} />
-              </div>
-            ) : null}
-
-            {item.last_lesson_id && item.last_subject_id && item.last_chapter_id ? (
-              <Link
-                to="/lesson/$courseId/$lessonId"
-                params={{ courseId: item.course_id, lessonId: item.last_lesson_id }}
-                search={{ subjectId: item.last_subject_id, chapterId: item.last_chapter_id }}
-                className="press mt-2.5 block truncate rounded-2xl bg-foreground px-3.5 py-2.5 text-[12px] font-semibold text-background"
-              >
-                Continue: {item.last_lesson_title ?? "last lecture"}
-              </Link>
-            ) : null}
             </div>
-          );
-        })}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {enrolledList.map((course) => (
+              <div
+                key={course.id}
+                className="group relative flex overflow-hidden rounded-3xl bg-card ring-1 ring-border shadow-2xs transition hover:ring-foreground/20"
+              >
+                <Link
+                  to="/course/$courseId"
+                  params={{ courseId: course.courseId }}
+                  className="flex flex-1 items-center gap-3.5 p-3.5 min-w-0"
+                >
+                  <div className="relative size-16 shrink-0 overflow-hidden rounded-2xl bg-muted">
+                    {course.thumbnailUrl ? (
+                      <img
+                        src={course.thumbnailUrl}
+                        alt=""
+                        referrerPolicy="no-referrer"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center bg-foreground/5 text-muted-foreground">
+                        <BookOpen className="size-6" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    {course.exam && (
+                      <span className="inline-block rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                        {course.exam}
+                      </span>
+                    )}
+                    <h3 className="mt-0.5 truncate text-sm font-bold font-display leading-tight">
+                      {course.courseTitle}
+                    </h3>
+                    {course.lastWatchedLessonTitle ? (
+                      <p className="mt-1 truncate text-[11px] text-muted-foreground">
+                        Last: {course.lastWatchedLessonTitle}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                        <CheckCircle className="size-3" /> Enrolled
+                      </p>
+                    )}
+                  </div>
+
+                  <ChevronRight className="size-5 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5" />
+                </Link>
+
+                <button
+                  onClick={(e) => handleUnenroll(course.courseId, e)}
+                  title="Unenroll"
+                  className="press flex items-center justify-center px-3 text-muted-foreground/50 hover:text-destructive transition border-l border-border"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Saved Bookmarked Lectures */}
+        {bookmarks.length > 0 && (
+          <div className="pt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <Bookmark className="size-3.5 text-amber-500 fill-amber-500" />
+                <span>Saved Bookmarks ({bookmarks.length})</span>
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              {bookmarks.map((bm) => (
+                <div
+                  key={bm.lessonId}
+                  className="flex items-center justify-between gap-3 rounded-2xl bg-card p-3 ring-1 ring-border shadow-2xs hover:ring-foreground/20 transition"
+                >
+                  <Link
+                    to="/lesson/$courseId/$lessonId"
+                    params={{ courseId: bm.courseId, lessonId: bm.lessonId }}
+                    search={{
+                      subjectId: bm.subjectId || "",
+                      chapterId: bm.chapterId || "",
+                    }}
+                    className="flex items-center gap-3 min-w-0 flex-1"
+                  >
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                      <Play className="size-4 fill-current" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-bold text-foreground">{bm.title}</p>
+                      <p className="truncate text-[10px] text-muted-foreground">
+                        {bm.courseTitle || "Course Lecture"}
+                      </p>
+                    </div>
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      studentStore.toggleBookmark(bm);
+                      setBookmarks(studentStore.getBookmarks());
+                    }}
+                    title="Remove Bookmark"
+                    className="press flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      <AddBatchDialog open={addBatchOpen} onOpenChange={setAddBatchOpen} />
       <Footer />
     </Screen>
   );
 }
-
-export default MyCoursesPage;

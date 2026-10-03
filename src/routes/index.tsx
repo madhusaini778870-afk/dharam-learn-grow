@@ -39,10 +39,15 @@ function Splash() {
       <div className="pointer-events-none absolute -top-14 right-0 size-32 rounded-full bg-lamp/25 blur-xl" />
 
       <div className="animate-rise relative">
-        <div className="mx-auto grid size-20 place-items-center rounded-3xl bg-foreground">
-          <span className="font-display text-4xl leading-none text-background">D</span>
+        <div className="mx-auto flex size-28 items-center justify-center">
+          <img
+            src="/app-logo.png"
+            alt="Dharam Bhai Study"
+            className="size-28 rounded-full object-cover shadow-xl ring-4 ring-primary/20"
+            referrerPolicy="no-referrer"
+          />
         </div>
-        <h1 className="mt-6 font-display text-[30px] leading-tight">Dharam Bhai Study</h1>
+        <h1 className="mt-6 font-display text-[30px] leading-tight font-bold">Dharam Bhai Study</h1>
         <p className="mt-2 text-sm font-medium tracking-[0.14em] text-muted-foreground uppercase">
           Learn · Practice · Grow
         </p>

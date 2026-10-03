@@ -1,22 +1,43 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { fetchChapterContents, fetchCourseDetail } from "@/services/courseApi";
-import { loadAdminCourse } from "@/services/adminCatalog";
 import {
-  formatClock,
-  parseCompositeId,
-  type NormalizedLesson,
-  type NormalizedNote,
-} from "@/services/courseNormalizer";
-import { supabase } from "@/integrations/supabase/client";
+  fetchChapterContents,
+  fetchCourseDetail,
+  fetchScheduleDetails,
+  type NormalizedDppTest,
+} from "@/services/courseApi";
+import { fetchVideoChatMessagesServer } from "@/services/videoChatService";
+import { studentStore } from "@/services/studentStore";
+import { gamificationStore } from "@/services/gamificationStore";
 import { useAuth } from "@/hooks/useAuth";
-import { ChevronLeft } from "@/components/app-shell";
-import { ListSkeleton, RetryButton } from "@/components/states";
+import { SourcePlayer } from "@/components/SourcePlayer";
 import { DoubtSolverSheet } from "@/components/doubt-solver";
-import { VideoPlayer, type PlayerHandle } from "@/components/video-player";
-import lessonBackdrop from "@/assets/lesson-backdrop.jpg";
+import { VideoChatSection } from "@/components/VideoChatSection";
+import { TopGamificationBar } from "@/components/TopGamificationBar";
+import { DppPracticeTestModal } from "@/components/DppPracticeTestModal";
+import {
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  Circle,
+  FileText,
+  Download,
+  ExternalLink,
+  Bot,
+  Video,
+  BookOpen,
+  MessageSquare,
+  Sparkles,
+  Info,
+  Layers,
+  Play,
+  Clock,
+  Bookmark,
+  Star,
+} from "lucide-react";
+import { ListSkeleton, RetryButton, StateCard } from "@/components/states";
 
 type LessonSearch = { subjectId: string; chapterId: string };
 
@@ -27,14 +48,17 @@ export const Route = createFileRoute("/lesson/$courseId/$lessonId")({
   }),
   head: () => ({
     meta: [
-      { title: "Video lesson · Dharam Bhai Study" },
+      { title: "Video Lesson · Source Player" },
       {
         name: "description",
         content:
-          "Watch your lecture, open its notes and ask the AI Doubt Solver about what you just saw.",
+          "Watch lecture with the high-performance source video player and access chapter notes.",
       },
-      { property: "og:title", content: "Video lesson · Dharam Bhai Study" },
-      { property: "og:description", content: "Watch your lecture, open notes and ask doubts." },
+      { property: "og:title", content: "Video Lesson · Source Player" },
+      {
+        property: "og:description",
+        content: "High quality lecture streaming, notes and AI doubt solver.",
+      },
     ],
   }),
   component: LessonScreen,
@@ -43,388 +67,872 @@ export const Route = createFileRoute("/lesson/$courseId/$lessonId")({
 function LessonScreen() {
   const { courseId, lessonId } = Route.useParams();
   const { subjectId, chapterId } = Route.useSearch();
-  const { session, loading, user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetchCourse = useServerFn(fetchCourseDetail);
   const loadContents = useServerFn(fetchChapterContents);
-  const parsed = parseCompositeId(courseId);
-  const isAdminCourse = parsed?.source === "admin";
+  const getSchedule = useServerFn(fetchScheduleDetails);
 
-  const [tab, setTab] = useState<"lecture" | "notes">("lecture");
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [saveNote, setSaveNote] = useState<string | null>(null);
-  const handleRef = useRef<PlayerHandle | null>(null);
+  const [activeTab, setActiveTab] = useState<"chat" | "notes" | "dpp" | "overview">("chat");
+  const [selectedTest, setSelectedTest] = useState<NormalizedDppTest | null>(null);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [initialPos, setInitialPos] = useState(0);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [currentPlaySeconds, setCurrentPlaySeconds] = useState(0);
+  const [seekTarget, setSeekTarget] = useState<number | null>(null);
 
+  const fetchChat = useServerFn(fetchVideoChatMessagesServer);
+  const chatQuery = useQuery({
+    queryKey: ["videoChat", courseId, lessonId],
+    queryFn: () => fetchChat({ data: { courseId, lessonId } }),
+    refetchInterval: 5000,
+  });
+  const chatCount = chatQuery.data?.status === "ok" ? chatQuery.data.count : 0;
+
+  // Initialize progress and enrollment from store
   useEffect(() => {
-    if (!loading && !session) navigate({ to: "/auth", replace: true });
-  }, [loading, session, navigate]);
+    const enrolled = studentStore.isEnrolled(courseId);
+    setIsEnrolled(enrolled);
+
+    const prog = studentStore.getLessonProgress(courseId, lessonId);
+    if (prog) {
+      setIsCompleted(prog.completed);
+      setInitialPos(prog.secondsWatched || 0);
+    }
+  }, [courseId, lessonId]);
 
   const course = useQuery({
     queryKey: ["course", courseId],
-    enabled: !isAdminCourse,
     queryFn: () => fetchCourse({ data: { courseId } }),
-    retry: false,
-  });
-
-  const addedCourse = useQuery({
-    queryKey: ["admin-course", courseId],
-    enabled: isAdminCourse,
-    queryFn: () => loadAdminCourse(parsed!.sourceCourseId),
     retry: false,
   });
 
   const contents = useQuery({
     queryKey: ["contents", courseId, subjectId, chapterId],
-    enabled: !isAdminCourse && Boolean(subjectId && chapterId),
+    enabled: Boolean(subjectId && chapterId),
     queryFn: () => loadContents({ data: { courseId, subjectId, chapterId } }),
     retry: false,
   });
 
-  const enrollment = useQuery({
-    queryKey: ["enrollment", user?.id, courseId],
-    enabled: Boolean(user?.id),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("enrollments")
-        .select("id")
-        .eq("course_id", courseId)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+  const detail = course.data?.status === "ok" ? course.data.course : null;
+
+  // Auto-enroll user when detail is available so playback and tracking start immediately
+  useEffect(() => {
+    if (detail && !isEnrolled) {
+      studentStore.enrollCourse(detail).then(() => {
+        setIsEnrolled(true);
+      });
+    }
+  }, [detail, isEnrolled]);
+
+  const lesson =
+    contents.data?.status === "ok"
+      ? (contents.data.lessons.find(
+          (item) =>
+            item.id === lessonId ||
+            (item as any).classId === lessonId ||
+            (item as any)._id === lessonId ||
+            item.title === lessonId,
+        ) ?? null)
+      : null;
+
+  // Fetch schedule details if lesson not found in chapter contents or has no videoUrl
+  const scheduleQuery = useQuery({
+    queryKey: ["scheduleDetails", courseId, subjectId, lessonId],
+    queryFn: () => getSchedule({ data: { courseId, subjectId: subjectId || undefined, lessonId } }),
+    enabled: !lesson || !lesson.videoUrl,
+    retry: 1,
   });
 
-  const progress = useQuery({
-    queryKey: ["lesson-progress", user?.id, lessonId],
-    enabled: Boolean(user?.id),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lesson_progress")
-        .select("position_seconds, seconds_watched, completed, duration_seconds")
-        .eq("lesson_id", lessonId)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-  });
+  const scheduleLesson = scheduleQuery.data?.status === "ok" ? scheduleQuery.data.lesson : null;
+  const resolvedLesson = useMemo(() => {
+    return (
+      (lesson?.videoUrl ? lesson : scheduleLesson) ||
+      lesson ||
+      scheduleLesson || {
+        id: lessonId,
+        title: detail?.title ? `${detail.title} - Lecture` : "Lecture",
+        videoUrl: null,
+        videoType: "direct" as const,
+        posterUrl: detail?.thumbnail ?? null,
+      }
+    );
+  }, [lesson, scheduleLesson, lessonId, detail?.title, detail?.thumbnail]);
 
-  const detailTitle = isAdminCourse ? addedCourse.data?.title : course.data?.status === "ok" ? course.data.course.title : null;
+  const chapterNotes = contents.data?.status === "ok" ? contents.data.notes : [];
+  const chapterDppNotes = contents.data?.status === "ok" ? (contents.data.dppNotes ?? []) : [];
+  const chapterDppVideos = contents.data?.status === "ok" ? (contents.data.dppVideos ?? []) : [];
+  const chapterDppTests = contents.data?.status === "ok" ? (contents.data.dppTests ?? []) : [];
+  const totalDppCount = chapterDppNotes.length + chapterDppTests.length + chapterDppVideos.length;
 
-  const { lessons, notes } = useMemo((): {
-    lessons: NormalizedLesson[];
-    notes: NormalizedNote[];
-  } => {
-    if (isAdminCourse) {
-      const chapter = addedCourse.data?.chapters.find((item) => item.id === chapterId);
-      const list = chapter?.lessons ?? addedCourse.data?.lessons ?? [];
-      const chapterNotes: NormalizedNote[] = [
-        ...list
-          .filter((lesson) => lesson.notesUrl)
-          .map((lesson) => ({
-            id: `${lesson.id}-notes`,
-            title: `${lesson.title} — notes`,
-            url: lesson.notesUrl!,
-          })),
-        ...(addedCourse.data?.notes ?? []),
-      ];
-      return { lessons: list, notes: chapterNotes };
+  const lessonList = contents.data?.status === "ok" ? contents.data.lessons : [];
+  const currentIndex = lessonList.findIndex((item) => item.id === lessonId);
+  const prevLesson = currentIndex > 0 ? lessonList[currentIndex - 1] : null;
+  const nextLesson =
+    currentIndex >= 0 && currentIndex < lessonList.length - 1 ? lessonList[currentIndex + 1] : null;
+
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [rating, setRating] = useState<number | null>(null);
+
+  useEffect(() => {
+    setIsBookmarked(studentStore.isBookmarked(lessonId));
+    setRating(studentStore.getLectureRating(lessonId));
+
+    const handleBookmarksUpdated = () => {
+      setIsBookmarked(studentStore.isBookmarked(lessonId));
+    };
+    const handleRatingsUpdated = (e: Event) => {
+      const custom = e as CustomEvent<{ lessonId: string; rating: number }>;
+      if (custom.detail?.lessonId === lessonId) {
+        setRating(custom.detail.rating);
+      } else {
+        setRating(studentStore.getLectureRating(lessonId));
+      }
+    };
+
+    window.addEventListener("dharam_bookmarks_updated", handleBookmarksUpdated);
+    window.addEventListener("dharam_ratings_updated", handleRatingsUpdated);
+    return () => {
+      window.removeEventListener("dharam_bookmarks_updated", handleBookmarksUpdated);
+      window.removeEventListener("dharam_ratings_updated", handleRatingsUpdated);
+    };
+  }, [lessonId]);
+
+  const handleToggleBookmark = () => {
+    const res = studentStore.toggleBookmark({
+      courseId,
+      lessonId,
+      title: resolvedLesson.title,
+      courseTitle: detail?.title,
+      subjectId,
+      chapterId,
+    });
+    setIsBookmarked(res);
+  };
+
+  const handleSetRating = (score: number) => {
+    studentStore.setLectureRating(lessonId, score);
+    setRating(score);
+  };
+
+  // Toggle lesson completed
+  const handleToggleComplete = async () => {
+    const next = !isCompleted;
+    setIsCompleted(next);
+    await studentStore.markCompleted(courseId, lessonId, next);
+    if (next) {
+      gamificationStore.awardLectureCompletion(courseId, lessonId);
     }
-    if (contents.data?.status === "ok") {
-      return { lessons: contents.data.lessons, notes: contents.data.notes };
+    queryClient.invalidateQueries({ queryKey: ["student_progress"] });
+  };
+
+  // Watch position update
+  const handleTimeUpdate = (seconds: number, duration: number) => {
+    setCurrentPlaySeconds(seconds);
+    studentStore.saveWatchPosition(courseId, lessonId, seconds, duration, {
+      title: resolvedLesson?.title,
+      courseTitle: detail?.title,
+      subjectId,
+      chapterId,
+      thumbnail: resolvedLesson?.posterUrl || detail?.thumbnail || null,
+    });
+  };
+
+  useEffect(() => {
+    if (resolvedLesson?.title) {
+      studentStore.recordRecentLecture({
+        courseId,
+        lessonId: resolvedLesson.id,
+        title: resolvedLesson.title,
+        courseTitle: detail?.title ?? "Course",
+        subjectId: subjectId || undefined,
+        chapterId: chapterId || undefined,
+        thumbnail: resolvedLesson.posterUrl || detail?.thumbnail || null,
+        timestampSeconds: initialPos,
+        durationSeconds: resolvedLesson.durationSeconds,
+      });
     }
-    return { lessons: [], notes: [] };
-  }, [isAdminCourse, addedCourse.data, contents.data, chapterId]);
+  }, [
+    resolvedLesson,
+    courseId,
+    lessonId,
+    detail?.title,
+    detail?.thumbnail,
+    subjectId,
+    chapterId,
+    initialPos,
+  ]);
 
-  const lesson = lessons.find((item) => item.id === lessonId) ?? null;
-  const isEnrolled = Boolean(enrollment.data);
-  const busy = isAdminCourse ? addedCourse.isLoading : course.isLoading || contents.isLoading;
-  const broken = isAdminCourse
-    ? addedCourse.isError
-    : course.isError || course.data?.status === "unavailable" || contents.data?.status === "unavailable";
-  const resumeAt = progress.data?.position_seconds ?? progress.data?.seconds_watched ?? 0;
-  const completed = progress.data?.completed === true;
+  const handleSeekTo = (sec: number) => {
+    setSeekTarget(sec);
+    setTimeout(() => setSeekTarget(null), 300);
+  };
 
-  const save = useCallback(
-    async (seconds: number, duration: number, markCompleted?: boolean) => {
-      if (!user || !lesson) return;
-      const position = Math.floor(seconds);
-      const total = Math.floor(duration || lesson.durationSeconds || 0);
-      const done = markCompleted === true || (total > 0 && position >= total - 15);
-      await supabase.from("lesson_progress").upsert(
-        {
-          user_id: user.id,
-          course_id: courseId,
-          lesson_id: lesson.id,
-          lesson_title: lesson.title,
-          subject_id: subjectId || null,
-          chapter_id: chapterId || null,
-          position_seconds: position,
-          seconds_watched: Math.max(position, progress.data?.seconds_watched ?? 0),
-          duration_seconds: total > 0 ? total : null,
-          completed: done,
-          completed_at: done ? new Date().toISOString() : null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,lesson_id" },
-      );
-      await supabase
-        .from("enrollments")
-        .update({
-          last_lesson_id: lesson.id,
-          last_lesson_title: lesson.title,
-          last_subject_id: subjectId || null,
-          last_chapter_id: chapterId || null,
-          last_watched_at: new Date().toISOString(),
-        })
-        .eq("course_id", courseId);
-      queryClient.invalidateQueries({ queryKey: ["lesson-progress", user.id, lesson.id] });
-      queryClient.invalidateQueries({ queryKey: ["progress", user.id] });
-      queryClient.invalidateQueries({ queryKey: ["enrollments", user.id] });
-    },
-    [user, lesson, courseId, subjectId, chapterId, progress.data?.seconds_watched, queryClient],
-  );
+  // Quick enroll
+  const handleEnrollNow = async () => {
+    if (!detail) return;
+    await studentStore.enrollCourse(detail);
+    setIsEnrolled(true);
+  };
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-[520px] bg-night text-paper">
-      <div className="px-5 pt-5">
+    <main className="mx-auto min-h-screen w-full max-w-[520px] bg-background text-foreground flex flex-col">
+      {/* Top Header */}
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border bg-card/60 backdrop-blur">
         <Link
           to="/course/$courseId"
           params={{ courseId }}
-          className="inline-flex items-center gap-1.5 text-xs text-paper/70"
+          className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition shrink-0"
         >
           <ChevronLeft className="size-4" />
-          {detailTitle ?? "Course"}
+          <span className="truncate max-w-[120px] sm:max-w-[180px]">
+            {detail?.title ?? "Course"}
+          </span>
         </Link>
+
+        {/* Top XP & Daily Streak Tracker */}
+        <TopGamificationBar compact />
+
+        {isEnrolled ? (
+          <button
+            onClick={handleToggleComplete}
+            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition shrink-0 ${
+              isCompleted
+                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                : "bg-muted text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {isCompleted ? (
+              <>
+                <CheckCircle2 className="size-3.5" />
+                <span>Done</span>
+              </>
+            ) : (
+              <>
+                <Circle className="size-3.5" />
+                <span>Mark Done</span>
+              </>
+            )}
+          </button>
+        ) : null}
       </div>
 
-      <div className="mt-4">
-        {busy ? (
-          <div className="px-5">
+      <div className="flex-1">
+        {course.isLoading || contents.isLoading ? (
+          <div className="p-5">
             <ListSkeleton count={1} />
           </div>
         ) : null}
 
-        {broken ? (
-          <div className="px-5 pb-8">
-            <div className="rounded-3xl bg-paper/5 px-6 py-8 text-center ring-1 ring-paper/10">
-              <p className="font-display text-lg">Lecture unavailable</p>
-              <p className="mx-auto mt-2 max-w-[30ch] text-[13px] text-paper/60">
-                This lecture couldn't be loaded right now. Please try again.
-              </p>
-              <div className="mt-5">
-                <RetryButton
-                  onClick={() => {
-                    void (isAdminCourse ? addedCourse.refetch() : contents.refetch());
-                  }}
-                />
-              </div>
-            </div>
+        {course.isError || course.data?.status === "unavailable" ? (
+          <div className="p-5">
+            <StateCard
+              tone="warn"
+              title="Course unavailable"
+              body="The course information could not be retrieved. Please try again."
+              action={<RetryButton onClick={() => course.refetch()} />}
+            />
           </div>
         ) : null}
 
-        {!busy && !broken && !lesson ? (
-          <div className="px-5">
-            <div className="rounded-3xl bg-paper/5 px-6 py-8 text-center ring-1 ring-paper/10">
-              <p className="font-display text-lg">Lecture not found</p>
-              <p className="mt-2 text-[13px] text-paper/60">
-                This lecture is not part of the published data for this chapter.
-              </p>
-            </div>
-          </div>
-        ) : null}
-
-        {lesson && !isEnrolled ? (
-          <div className="px-5">
-            <div className="rounded-3xl bg-paper/5 px-6 py-8 text-center ring-1 ring-paper/10">
-              <p className="font-display text-lg">Locked lecture</p>
-              <p className="mt-2 text-[13px] text-paper/60">Enroll in this course to watch it.</p>
-              <Link
-                to="/course/$courseId"
-                params={{ courseId }}
-                className="press mt-5 inline-flex rounded-2xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
-              >
-                Go to course
-              </Link>
-            </div>
-          </div>
-        ) : null}
-
-        {lesson && isEnrolled ? (
-          <>
-            {lesson.playback === "direct" && lesson.videoUrl ? (
-              <VideoPlayer
-                src={lesson.videoUrl}
-                poster={lesson.posterUrl}
-                startAt={resumeAt}
-                onHandle={(handle) => {
-                  handleRef.current = handle;
+        {resolvedLesson ? (
+          <div>
+            {/* 1. Persistent Source Video Player on top */}
+            <div className="sticky top-0 z-20 bg-background shadow-xs">
+              <SourcePlayer
+                key={lessonId}
+                videoUrl={resolvedLesson.videoUrl ?? null}
+                videoType={resolvedLesson.videoType ?? "direct"}
+                playerEmbedUrl={resolvedLesson.playerEmbedUrl ?? null}
+                title={resolvedLesson.title}
+                teacherName={
+                  resolvedLesson.teacherName ||
+                  (detail?.teachers && detail.teachers.length > 0
+                    ? detail.teachers.join(", ")
+                    : null)
+                }
+                batchTitle={detail?.title ?? null}
+                posterUrl={resolvedLesson.posterUrl ?? detail?.thumbnail ?? null}
+                initialPosition={initialPos}
+                seekTarget={seekTarget}
+                batchId={courseId}
+                subjectId={subjectId}
+                scheduleId={lessonId}
+                mp4Recordings={resolvedLesson.mp4Recordings}
+                isLoadingSource={Boolean(
+                  !resolvedLesson.videoUrl &&
+                  (course.isLoading || contents.isLoading || scheduleQuery.isLoading),
+                )}
+                onTimeUpdate={handleTimeUpdate}
+                onEnded={() => {
+                  setIsCompleted(true);
+                  studentStore.markCompleted(courseId, lessonId, true);
+                  gamificationStore.awardLectureCompletion(courseId, lessonId);
                 }}
-                onProgress={(seconds, duration) => void save(seconds, duration)}
-                onEnded={(duration) => void save(duration, duration, true)}
               />
-            ) : lesson.playback === "embed" && lesson.embedUrl ? (
-              <div className="aspect-video w-full bg-black">
-                <iframe
-                  src={lesson.embedUrl}
-                  title={lesson.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; fullscreen"
-                  allowFullScreen
-                  className="size-full"
-                />
+            </div>
+
+            {/* 2. Lecture Navigation Bar (Previous/Next Lecture, Rating & Bookmark) */}
+            <div className="flex items-center justify-between gap-2 border-b border-border bg-card/70 px-3.5 py-2">
+              {/* Previous / Next Lecture Navigation */}
+              <div className="flex items-center gap-1.5">
+                {prevLesson ? (
+                  <Link
+                    to="/lesson/$courseId/$lessonId"
+                    params={{ courseId, lessonId: prevLesson.id }}
+                    search={{ subjectId, chapterId }}
+                    className="press inline-flex items-center gap-1 rounded-xl bg-muted px-2.5 py-1.5 text-xs font-semibold text-foreground hover:bg-accent transition"
+                    title={`Previous: ${prevLesson.title}`}
+                  >
+                    <ChevronLeft className="size-3.5" />
+                    <span>Previous</span>
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-xl bg-muted/40 px-2.5 py-1.5 text-xs font-medium text-muted-foreground opacity-50 cursor-not-allowed">
+                    <ChevronLeft className="size-3.5" />
+                    <span>Previous</span>
+                  </span>
+                )}
+
+                {nextLesson ? (
+                  <Link
+                    to="/lesson/$courseId/$lessonId"
+                    params={{ courseId, lessonId: nextLesson.id }}
+                    search={{ subjectId, chapterId }}
+                    className="press inline-flex items-center gap-1 rounded-xl bg-amber-500/15 px-2.5 py-1.5 text-xs font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-500/25 transition ring-1 ring-amber-500/30"
+                    title={`Next: ${nextLesson.title}`}
+                  >
+                    <span>Next Lecture</span>
+                    <ChevronRight className="size-3.5" />
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-xl bg-muted/40 px-2.5 py-1.5 text-xs font-medium text-muted-foreground opacity-50 cursor-not-allowed">
+                    <span>Next Lecture</span>
+                    <ChevronRight className="size-3.5" />
+                  </span>
+                )}
               </div>
-            ) : (
-              <div className="relative aspect-video w-full bg-black">
-                <img
-                  src={lessonBackdrop}
-                  alt=""
-                  loading="lazy"
-                  className="size-full object-cover opacity-40"
-                />
-                <div className="absolute inset-0 grid place-items-center px-6 text-center">
-                  <div>
-                    <p className="font-display text-lg">Video not publicly available</p>
-                    <p className="mt-1.5 text-[12px] text-paper/60">
-                      The source did not publish a playable video for this lecture.
-                    </p>
-                  </div>
+
+              {/* Lecture Rating & Bookmark Controls */}
+              <div className="flex items-center gap-2">
+                {/* 5-Star Interactive Rating */}
+                <div
+                  className="flex items-center gap-0.5 rounded-lg bg-muted/60 p-1"
+                  title="Rate this lecture"
+                >
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => handleSetRating(star)}
+                      className={`p-0.5 transition hover:scale-120 ${
+                        (rating || 0) >= star
+                          ? "text-amber-500"
+                          : "text-muted-foreground/60 hover:text-amber-400"
+                      }`}
+                      aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
+                    >
+                      <Star
+                        className={`size-3.5 ${(rating || 0) >= star ? "fill-amber-500" : ""}`}
+                      />
+                    </button>
+                  ))}
                 </div>
+
+                {/* Bookmark Toggle */}
+                <button
+                  type="button"
+                  onClick={handleToggleBookmark}
+                  className={`press flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition ${
+                    isBookmarked
+                      ? "bg-amber-500 text-black shadow-xs font-bold"
+                      : "bg-muted text-muted-foreground hover:text-foreground"
+                  }`}
+                  title={isBookmarked ? "Remove Bookmark" : "Bookmark this lecture"}
+                >
+                  <Bookmark className={`size-3.5 ${isBookmarked ? "fill-current" : ""}`} />
+                  <span className="hidden sm:inline">{isBookmarked ? "Saved" : "Save"}</span>
+                </button>
               </div>
-            )}
+            </div>
 
-            <div className="px-5 pt-5">
-              <h1 className="font-display text-2xl leading-tight text-balance">{lesson.title}</h1>
-              <p className="mt-1 text-xs text-paper/45">
-                {[
-                  lesson.teacher,
-                  lesson.durationSeconds ? formatClock(lesson.durationSeconds) : null,
-                  resumeAt > 5 && !completed ? `Resumes at ${formatClock(resumeAt)}` : null,
-                  completed ? "Completed" : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ") || "Lecture"}
-              </p>
+            {/* 3. Lecture Title & Quick Actions */}
+            <div className="border-b border-border bg-card/60 px-4 py-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                      {detail?.category ?? "Study"} Lecture
+                    </span>
+                    {isCompleted ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="size-3" /> Completed
+                      </span>
+                    ) : null}
+                  </div>
+                  <h1 className="mt-1 font-display text-base font-bold leading-tight">
+                    {resolvedLesson.title}
+                  </h1>
+                </div>
 
-              <div className="mt-4 flex gap-2 rounded-2xl bg-paper/8 p-1">
-                <TabButton active={tab === "lecture"} onClick={() => setTab("lecture")}>
-                  Lecture
-                </TabButton>
-                <TabButton active={tab === "notes"} onClick={() => setTab("notes")}>
-                  Notes ({notes.length})
-                </TabButton>
+                <button
+                  type="button"
+                  onClick={() => setSheetOpen(true)}
+                  className="press flex shrink-0 items-center gap-1.5 rounded-xl bg-amber-500/15 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 ring-1 ring-amber-500/30 transition hover:bg-amber-500/25"
+                >
+                  <Bot className="size-3.5" />
+                  <span>Ask AI</span>
+                </button>
               </div>
 
-              {tab === "lecture" ? (
-                <div className="mt-4 space-y-3">
+              {/* Verified Playback at 3 Time Points Quick Test */}
+              <div className="mt-3 rounded-xl bg-amber-500/10 p-2.5 ring-1 ring-amber-500/20">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <span className="flex items-center gap-1.5 text-xs font-bold text-amber-900 dark:text-amber-200">
+                    <Clock className="size-3.5 text-amber-600 dark:text-amber-400" />
+                    Check Video at 3 Time Points
+                  </span>
+                  <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-300">
+                    Auto-Plays Instant Video
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
-                    onClick={() =>
-                      void save(
-                        handleRef.current?.currentTime() ?? lesson.durationSeconds ?? 0,
-                        lesson.durationSeconds ?? 0,
-                        !completed,
-                      ).then(() => setSaveNote(completed ? "Marked as not finished" : "Marked as completed"))
-                    }
-                    className={`press w-full rounded-2xl py-3.5 text-sm font-semibold ${
-                      completed
-                        ? "bg-pine text-paper"
-                        : "bg-paper/10 text-paper ring-1 ring-paper/20"
-                    }`}
+                    onClick={() => handleSeekTo(15)}
+                    className="flex flex-col items-start p-2 rounded-lg bg-background hover:bg-amber-500/15 hover:ring-amber-500/40 ring-1 ring-border text-left transition shadow-xs group"
                   >
-                    {completed ? "✓ Completed" : "Mark as completed"}
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                      <Play className="size-2.5 fill-current" /> 00:15
+                    </span>
+                    <span className="text-[10px] text-muted-foreground truncate w-full group-hover:text-foreground">
+                      Point 1: Intro
+                    </span>
                   </button>
-                  {saveNote ? <p className="text-[12px] text-paper/60">{saveNote}</p> : null}
+                  <button
+                    type="button"
+                    onClick={() => handleSeekTo(150)}
+                    className="flex flex-col items-start p-2 rounded-lg bg-background hover:bg-amber-500/15 hover:ring-amber-500/40 ring-1 ring-border text-left transition shadow-xs group"
+                  >
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                      <Play className="size-2.5 fill-current" /> 02:30
+                    </span>
+                    <span className="text-[10px] text-muted-foreground truncate w-full group-hover:text-foreground">
+                      Point 2: Theory
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSeekTo(300)}
+                    className="flex flex-col items-start p-2 rounded-lg bg-background hover:bg-amber-500/15 hover:ring-amber-500/40 ring-1 ring-border text-left transition shadow-xs group"
+                  >
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                      <Play className="size-2.5 fill-current" /> 05:00
+                    </span>
+                    <span className="text-[10px] text-muted-foreground truncate w-full group-hover:text-foreground">
+                      Point 3: Practice
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
 
+            {/* 3. Section Navigation Tabs */}
+            <div className="flex border-b border-border bg-muted/30 px-3 overflow-x-auto">
+              <button
+                onClick={() => setActiveTab("chat")}
+                className={`flex items-center gap-1.5 border-b-2 py-2.5 px-3 text-xs font-semibold whitespace-nowrap transition ${
+                  activeTab === "chat"
+                    ? "border-amber-500 text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <MessageSquare className="size-3.5" />
+                <span>Live Chat</span>
+                <span className="flex items-center gap-1 ml-1 rounded-full bg-emerald-500/15 px-1.5 py-0.2 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  {chatCount}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("notes")}
+                className={`flex items-center gap-1.5 border-b-2 py-2.5 px-3 text-xs font-semibold whitespace-nowrap transition ${
+                  activeTab === "notes"
+                    ? "border-amber-500 text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <BookOpen className="size-3.5" />
+                <span>Notes ({chapterNotes.length})</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("dpp")}
+                className={`flex items-center gap-1.5 border-b-2 py-2.5 px-3 text-xs font-semibold whitespace-nowrap transition ${
+                  activeTab === "dpp"
+                    ? "border-amber-500 text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Layers className="size-3.5" />
+                <span>DPP &amp; Tests ({totalDppCount})</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("overview")}
+                className={`flex items-center gap-1.5 border-b-2 py-2.5 px-3 text-xs font-semibold whitespace-nowrap transition ${
+                  activeTab === "overview"
+                    ? "border-amber-500 text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Info className="size-3.5" />
+                <span>Overview</span>
+              </button>
+            </div>
+
+            {/* 4. Tab Contents */}
+            {/* Live Chat Tab */}
+            {activeTab === "chat" ? (
+              <div className="p-4 animate-in fade-in duration-150">
+                <VideoChatSection
+                  courseId={courseId}
+                  lessonId={resolvedLesson.id}
+                  lessonTitle={resolvedLesson.title}
+                  currentPlaySeconds={currentPlaySeconds}
+                  onSeekTo={handleSeekTo}
+                  onOpenDoubtSolver={() => setSheetOpen(true)}
+                />
+              </div>
+            ) : null}
+
+            {/* Chapter Notes Tab */}
+            {activeTab === "notes" ? (
+              <div className="p-4 space-y-4 animate-in fade-in duration-150">
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <BookOpen className="size-3.5 text-amber-500" />
+                    <span>Class Notes (PDF)</span>
+                    <span className="rounded-full bg-muted px-1.5 py-0.2 text-[10px]">
+                      {chapterNotes.length}
+                    </span>
+                  </div>
+
+                  {chapterNotes.length === 0 ? (
+                    <div className="rounded-xl bg-card p-6 text-center ring-1 ring-border text-xs text-muted-foreground">
+                      No class notes published for this lecture yet.
+                    </div>
+                  ) : (
+                    chapterNotes.map((note, idx) => (
+                      <div
+                        key={`${note.id}-${idx}`}
+                        className="flex items-center justify-between gap-3 rounded-2xl bg-card p-3.5 ring-1 ring-border shadow-xs"
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                            <FileText className="size-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-semibold text-foreground">
+                              {note.title}
+                            </p>
+                            <span className="text-[10px] text-muted-foreground">
+                              Class Lecture PDF Notes
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <a
+                            href={note.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="press flex size-8 items-center justify-center rounded-lg bg-muted text-muted-foreground hover:text-foreground transition"
+                            title="Open Notes in new tab"
+                          >
+                            <ExternalLink className="size-4" />
+                          </a>
+                          <a
+                            href={note.url}
+                            download
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="press flex size-8 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 transition"
+                            title="Download Notes"
+                          >
+                            <Download className="size-4" />
+                          </a>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            ) : null}
+
+            {/* DPP & Practice Tests Tab */}
+            {activeTab === "dpp" ? (
+              <div className="p-4 space-y-4 animate-in fade-in duration-150">
+                {/* 1. DPP Online Practice Tests */}
+                {chapterDppTests.length > 0 && (
+                  <div className="space-y-2.5">
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <Layers className="size-3.5 text-emerald-500" />
+                      <span>DPP Online Practice Tests</span>
+                      <span className="rounded-full bg-muted px-1.5 py-0.2 text-[10px]">
+                        {chapterDppTests.length}
+                      </span>
+                    </div>
+                    {chapterDppTests.map((test, idx) => (
+                      <div
+                        key={`${test.id}-${idx}`}
+                        className="flex items-center justify-between gap-3 rounded-2xl bg-card p-3.5 ring-1 ring-border shadow-xs border-l-2 border-l-emerald-500"
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                            <Layers className="size-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-semibold text-foreground">
+                              {test.title}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {test.totalQuestions
+                                ? `${test.totalQuestions} questions`
+                                : "Practice Test"}
+                              {test.totalMarks ? ` · ${test.totalMarks} marks` : ""}
+                              {test.maxDuration ? ` · ${test.maxDuration} mins` : ""}
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTest(test)}
+                          className="press flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-500 transition"
+                        >
+                          <span>Start Test</span>
+                          <Play className="size-3 fill-current" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 2. Daily Practice Problems (DPP PDF) */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <FileText className="size-3.5 text-blue-500" />
+                    <span>Daily Practice Problems (DPP Sheets)</span>
+                    <span className="rounded-full bg-muted px-1.5 py-0.2 text-[10px]">
+                      {chapterDppNotes.length}
+                    </span>
+                  </div>
+
+                  {chapterDppNotes.length === 0 &&
+                  chapterDppTests.length === 0 &&
+                  chapterDppVideos.length === 0 ? (
+                    <div className="rounded-xl bg-card p-6 text-center ring-1 ring-border text-xs text-muted-foreground">
+                      No DPPs published for this chapter yet.
+                    </div>
+                  ) : null}
+
+                  {chapterDppNotes.map((dpp, idx) => (
+                    <div
+                      key={`${dpp.id}-${idx}`}
+                      className="flex items-center justify-between gap-3 rounded-2xl bg-card p-3.5 ring-1 ring-border shadow-xs border-l-2 border-l-blue-500"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                          <FileText className="size-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-semibold text-foreground">
+                            {dpp.title}
+                          </p>
+                          <span className="text-[10px] text-muted-foreground">
+                            DPP · PDF Practice Sheet
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <a
+                          href={dpp.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="press flex size-8 items-center justify-center rounded-lg bg-muted text-muted-foreground hover:text-foreground transition"
+                          title="Open DPP in new tab"
+                        >
+                          <ExternalLink className="size-4" />
+                        </a>
+                        <a
+                          href={dpp.url}
+                          download
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="press flex size-8 items-center justify-center rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 hover:bg-blue-500/25 transition"
+                          title="Download DPP PDF"
+                        >
+                          <Download className="size-4" />
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 3. DPP Video Solutions */}
+                {chapterDppVideos.length > 0 ? (
+                  <div className="space-y-2.5 pt-2">
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <Video className="size-3.5 text-purple-500" />
+                      <span>DPP Video Solutions</span>
+                      <span className="rounded-full bg-muted px-1.5 py-0.2 text-[10px]">
+                        {chapterDppVideos.length}
+                      </span>
+                    </div>
+                    {chapterDppVideos.map((dppVid, idx) => (
+                      <Link
+                        key={`${dppVid.id}-${idx}`}
+                        to="/lesson/$courseId/$lessonId"
+                        params={{ courseId, lessonId: dppVid.id }}
+                        search={{ subjectId, chapterId }}
+                        className="press flex items-center justify-between gap-3 rounded-2xl bg-card p-3 ring-1 ring-border"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          {dppVid.posterUrl ? (
+                            <img
+                              src={dppVid.posterUrl}
+                              alt=""
+                              className="size-10 rounded-lg object-cover ring-1 ring-border shrink-0"
+                            />
+                          ) : (
+                            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-purple-500/10 text-purple-600">
+                              <Video className="size-4" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-medium text-foreground">
+                              {dppVid.title}
+                            </p>
+                            {dppVid.durationFormatted ? (
+                              <span className="text-[10px] text-muted-foreground">
+                                {dppVid.durationFormatted}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                        <span className="text-xs font-semibold text-purple-600">Watch ↗</span>
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {/* Overview & Doubts Tab */}
+            {activeTab === "overview" ? (
+              <div className="p-4 space-y-4 animate-in fade-in duration-150">
+                <div className="rounded-2xl bg-card p-4 ring-1 ring-border shadow-xs space-y-3">
+                  <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                    Lecture Information
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded-xl bg-muted/50 p-2.5">
+                      <span className="text-[10px] text-muted-foreground">Course</span>
+                      <p className="font-semibold text-foreground truncate">
+                        {detail?.title ?? "Course"}
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-muted/50 p-2.5">
+                      <span className="text-[10px] text-muted-foreground">Category</span>
+                      <p className="font-semibold text-foreground">
+                        {detail?.category ?? "General"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-xl bg-muted/40 p-3 text-xs">
+                    <span className="text-muted-foreground">Completion Status</span>
+                    <button
+                      onClick={handleToggleComplete}
+                      className={`flex items-center gap-1.5 font-semibold ${
+                        isCompleted
+                          ? "text-emerald-500"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <>
+                          <CheckCircle2 className="size-4" />
+                          <span>Marked Complete</span>
+                        </>
+                      ) : (
+                        <>
+                          <Circle className="size-4" />
+                          <span>Mark as Complete</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* AI Doubt Solver card */}
+                <div className="rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent p-4 ring-1 ring-amber-500/25 shadow-xs">
+                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-bold text-sm">
+                    <Bot className="size-5" />
+                    <span>AI Doubt Solver</span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                    Stuck on a concept in this lecture? Ask our AI Tutor to break it down
+                    step-by-step with formulas and examples.
+                  </p>
                   <button
                     type="button"
                     onClick={() => setSheetOpen(true)}
-                    className="press grid h-12 w-full place-items-center rounded-2xl bg-paper/10 text-sm font-medium ring-1 ring-paper/20"
+                    className="press mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-foreground py-2.5 text-xs font-semibold text-background shadow transition hover:opacity-90"
                   >
-                    🤖 AI Doubt Solver
+                    <Sparkles className="size-3.5" />
+                    <span>Open AI Doubt Assistant</span>
                   </button>
-
-                  <p className="text-[11px] text-paper/45">
-                    Lectures in this chapter: {lessons.length}
-                  </p>
-                  <div className="space-y-1.5">
-                    {lessons
-                      .filter((item) => item.id !== lesson.id)
-                      .map((item) => (
-                        <Link
-                          key={item.id}
-                          to="/lesson/$courseId/$lessonId"
-                          params={{ courseId, lessonId: item.id }}
-                          search={{ subjectId, chapterId }}
-                          className="press block truncate rounded-2xl bg-paper/5 px-3.5 py-2.5 text-[12px] ring-1 ring-paper/10"
-                        >
-                          {item.title}
-                        </Link>
-                      ))}
-                  </div>
                 </div>
-              ) : (
-                <div className="mt-4 space-y-2">
-                  {notes.length === 0 ? (
-                    <p className="rounded-2xl bg-paper/5 px-4 py-6 text-center text-[12px] text-paper/60 ring-1 ring-paper/10">
-                      No notes were published for this chapter.
-                    </p>
-                  ) : null}
-                  {notes.map((note) => (
-                    <a
-                      key={note.id}
-                      href={note.url}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="press block rounded-2xl bg-paper/8 px-4 py-3 text-[13px] ring-1 ring-paper/10"
-                    >
-                      📄 {note.title}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
+              </div>
+            ) : null}
+          </div>
         ) : null}
       </div>
 
-      <p className="py-10 text-center text-[11px] tracking-wide text-paper/35">
+      <footer className="mt-auto py-6 text-center text-[11px] text-muted-foreground">
         Dharam Bhai Study · By Lakshya Prince
-      </p>
+      </footer>
 
-      {sheetOpen && lesson ? (
+      {sheetOpen && resolvedLesson ? (
         <DoubtSolverSheet
           context={{
             courseId,
-            lessonId: lesson.id,
-            lessonTitle: lesson.title,
-            lessonContext: lesson.transcript ?? null,
-            timestampSeconds: handleRef.current?.currentTime() ?? null,
+            courseTitle: detail?.title ?? "Course",
+            subjectName: subjectId
+              ? (detail?.subjectRefs.find((s) => s.id === subjectId)?.name ?? subjectId)
+              : "General",
+            chapterTitle: chapterId ?? null,
+            lessonId: resolvedLesson.id,
+            lessonTitle: resolvedLesson.title,
+            lessonContext: resolvedLesson.transcript ?? null,
+            timestampSeconds: currentPlaySeconds,
           }}
           onClose={() => setSheetOpen(false)}
         />
       ) : null}
-    </main>
-  );
-}
 
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex-1 rounded-xl py-2.5 text-[13px] font-semibold transition-colors ${
-        active ? "bg-paper text-night" : "text-paper/70"
-      }`}
-    >
-      {children}
-    </button>
+      {selectedTest ? (
+        <DppPracticeTestModal
+          test={selectedTest}
+          chapterTitle={resolvedLesson?.title}
+          onClose={() => setSelectedTest(null)}
+        />
+      ) : null}
+    </main>
   );
 }

@@ -1,0 +1,101 @@
+[
+  {
+    "id": "usr_1789300836456_f1180211",
+    "name": "LAKSHYA",
+    "email": "madhusaini778870@gmail.com",
+    "passwordHash": "ccce69666b0ac1d7893bb9b36eb282e9:0216de5feacde4c6455fb404d6f02da6bf914037fbe3545e7e1bb3d66d49586c95bf4085c630ec5e5fbf0bb90771015011106475656646b7973fe6c3c1a56b0e",
+    "role": "admin",
+    "status": "active",
+    "createdAt": "2026-09-13T12:00:36.456Z",
+    "updatedAt": "2026-09-23T13:15:07.506Z",
+    "enrollments": [
+      {
+        "id": "enr_1789558479920_0c69f0aa",
+        "courseId": "s1-698ad3519549b300a5e1cc6a",
+        "courseTitle": "Arjuna JEE 2027",
+        "exam": "IIT-JEE",
+        "thumbnailUrl": "https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/bb464a1b-1525-48df-8c4e-a7e607038bf7.jpeg",
+        "createdAt": "2026-09-16T11:34:39.920Z",
+        "lastWatchedLessonId": "6a940a9bea1638c3a65708b4",
+        "lastWatchedSeconds": 0,
+        "lastWatchedLessonTitle": "Course Lecture",
+        "lastWatchedSubjectId": "69b569e8cd9eea58b9fe60da",
+        "lastWatchedChapterId": "69dc843271d06abbf386979b"
+      },
+      {
+        "id": "enr_1789301009741_4e01353a",
+        "courseId": "s1-65d86238cdb6ea00181bdcfe",
+        "courseTitle": "Arjuna JEE 2025",
+        "exam": "IIT-JEE",
+        "thumbnailUrl": "https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/30591125-b4b2-4ee0-af2d-0edc88cc2d89.png",
+        "createdAt": "2026-09-13T12:03:29.741Z"
+      },
+      {
+        "id": "enr_1789300845422_3ffed029",
+        "courseId": "s1-6300b300866450001122cab6",
+        "courseTitle": "Drona - 12th/NEET 2023",
+        "exam": "NEET",
+        "thumbnailUrl": "https://d2bps9p1kiy4ka.cloudfront.net/5eb393ee95fab7468a79d189/7d2d9b80-e491-4f93-b69b-eac5075d668a.jpeg",
+        "createdAt": "2026-09-13T12:00:45.422Z"
+      }
+    ],
+    "progress": [
+      {
+        "courseId": "s1-698ad3519549b300a5e1cc6a",
+        "lessonId": "69ff18a7ef0d5bb3113d55b1",
+        "secondsWatched": 0,
+        "durationSeconds": 0,
+        "completed": false,
+        "updatedAt": "2026-09-20T11:53:33.363Z"
+      },
+      {
+        "courseId": "s1-698ad3519549b300a5e1cc6a",
+        "lessonId": "6aae87133a588b2cabf1bc39",
+        "secondsWatched": 0,
+        "durationSeconds": 0,
+        "completed": false,
+        "updatedAt": "2026-09-20T12:11:30.575Z"
+      },
+      {
+        "courseId": "s1-698ad3519549b300a5e1cc6a",
+        "lessonId": "6a940a89ea1638c3a657073d",
+        "secondsWatched": 0,
+        "durationSeconds": 634,
+        "completed": false,
+        "updatedAt": "2026-09-21T12:12:26.883Z"
+      },
+      {
+        "courseId": "s1-698ad3519549b300a5e1cc6a",
+        "lessonId": "6a940ab8ea1638c3a6570cd6",
+        "secondsWatched": 0,
+        "durationSeconds": 634,
+        "completed": false,
+        "updatedAt": "2026-09-21T12:17:12.110Z"
+      },
+      {
+        "courseId": "s1-698ad3519549b300a5e1cc6a",
+        "lessonId": "6a940a45ea1638c3a656fd8b",
+        "secondsWatched": 0,
+        "durationSeconds": 634,
+        "completed": false,
+        "updatedAt": "2026-09-21T12:29:34.956Z"
+      },
+      {
+        "courseId": "s1-698ad3519549b300a5e1cc6a",
+        "lessonId": "69e7171459bdb1058968f01e",
+        "secondsWatched": 0,
+        "durationSeconds": 0,
+        "completed": false,
+        "updatedAt": "2026-09-21T12:36:26.004Z"
+      },
+      {
+        "courseId": "s1-698ad3519549b300a5e1cc6a",
+        "lessonId": "6a940a9bea1638c3a65708b4",
+        "secondsWatched": 0,
+        "durationSeconds": 0,
+        "completed": false,
+        "updatedAt": "2026-09-23T13:15:07.506Z"
+      }
+    ]
+  }
+]

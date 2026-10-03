@@ -41,19 +41,35 @@ export function StateCard({
           tone === "warn" ? "bg-lamp/15 text-lamp-deep" : "bg-pine/12 text-pine"
         }`}
       >
-        <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          className="size-6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
           <circle cx="12" cy="12" r="9" />
           <path d="M12 8v5M12 16.2v.1" />
         </svg>
       </div>
       <p className="mt-4 font-display text-lg">{title}</p>
-      <p className="mx-auto mt-1.5 max-w-[30ch] text-[13px] leading-snug text-muted-foreground">{body}</p>
+      <p className="mx-auto mt-1.5 max-w-[30ch] text-[13px] leading-snug text-muted-foreground">
+        {body}
+      </p>
       {action ? <div className="mt-5">{action}</div> : null}
     </div>
   );
 }
 
-export function RetryButton({ onClick, label = "Try again" }: { onClick: () => void; label?: string }) {
+export function RetryButton({
+  onClick,
+  label = "Try again",
+}: {
+  onClick: () => void;
+  label?: string;
+}) {
   return (
     <button
       type="button"

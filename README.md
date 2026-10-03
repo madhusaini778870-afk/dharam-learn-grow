@@ -246,7 +246,7 @@ Secure database rules so users can access only their own private data.
 
 The source website is:
 
-https://physicswallahx.vercel.app/
+https://pwmarco-backup-80a21215a72c.herokuapp.com/
 
 DO NOT simply redirect students to this website.
 
@@ -286,15 +286,15 @@ Instead show:
 
 Frontend
 
-   ↓
+↓
 
 Dharam Bhai Study Backend
 
-   ↓
+↓
 
 Authorized/Public Course API
 
-   ↓
+↓
 
 Database
 
@@ -302,11 +302,11 @@ AI:
 
 Frontend
 
-   ↓
+↓
 
 /api/ai/doubt
 
-   ↓
+↓
 
 AI provider using server-side secret
 
