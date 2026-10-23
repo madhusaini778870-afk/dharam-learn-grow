@@ -12,16 +12,16 @@ export const Route = createFileRoute("/courses")({
   },
   head: () => ({
     meta: [
-      { title: "Vidyaverse Courses · Dharam Bhai Study" },
+      { title: "Courses · Dharam Bhai Study" },
       {
         name: "description",
         content:
-          "Browse high-definition video lecture courses from https://vidya-verse.ai.studio/ with notes and instant streaming.",
+          "Browse the combined course catalog from both authorized sources: JEE, NEET and Class 9 to 12 batches.",
       },
-      { property: "og:title", content: "Vidyaverse Courses · Dharam Bhai Study" },
+      { property: "og:title", content: "Courses · Dharam Bhai Study" },
       {
         property: "og:description",
-        content: "Vidyaverse course catalog with search, topics, and video lectures.",
+        content: "Combined JEE, NEET and Class 9-12 course catalog with search and filters.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

@@ -12,8 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/hooks/useAuth";
-import { WhatsAppPopup } from "@/components/WhatsAppPopup";
-import { TelegramJoinModal } from "@/components/TelegramJoinModal";
+import { CommunityPopup } from "@/components/community-popup";
 
 function NotFoundComponent() {
   return (
@@ -82,20 +81,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Mobile-first JEE and NEET learning platform with courses, notes, video lessons, and AI doubt solver.",
-      },
-      { property: "og:title", content: "Dharam Bhai Study — Learn • Practice • Grow" },
-      {
-        property: "og:description",
-        content:
-          "Mobile-first JEE and NEET learning platform with courses, notes, video lessons, and AI doubt solver.",
+          "Dharam Bhai Study is a mobile-first JEE and NEET learning app with courses, notes, video lessons and an AI doubt solver. By Lakshya Prince.",
       },
       { name: "author", content: "Lakshya Prince" },
       { name: "theme-color", content: "#f4eee1" },
       { property: "og:type", content: "website" },
-      { property: "og:image", content: "/app-logo.png" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: "/app-logo.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -105,8 +96,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Grotesk:wght@400;500;600;700&display=swap",
       },
-      { rel: "icon", href: "/app-logo.png", type: "image/png" },
-      { rel: "apple-touch-icon", href: "/app-logo.png" },
+      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
   shellComponent: RootShell,
@@ -137,8 +127,7 @@ function RootComponent() {
       <AuthProvider>
         {/* Required: nested routes render here. */}
         <Outlet />
-        <WhatsAppPopup />
-        <TelegramJoinModal />
+        <CommunityPopup />
       </AuthProvider>
     </QueryClientProvider>
   );

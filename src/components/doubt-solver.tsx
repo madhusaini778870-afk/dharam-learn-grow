@@ -4,9 +4,6 @@ import { CloseIcon, SendIcon, SparkIcon } from "@/components/app-shell";
 
 export type DoubtContext = {
   courseId: string;
-  courseTitle?: string | null;
-  subjectName?: string | null;
-  chapterTitle?: string | null;
   lessonId: string;
   lessonTitle: string;
   lessonContext?: string | null;
@@ -52,9 +49,6 @@ export function DoubtSolverSheet({
         },
         body: JSON.stringify({
           courseId: context.courseId,
-          courseTitle: context.courseTitle ?? null,
-          subjectName: context.subjectName ?? null,
-          chapterTitle: context.chapterTitle ?? null,
           lessonId: context.lessonId,
           lessonTitle: context.lessonTitle,
           lessonContext: context.lessonContext ?? null,
@@ -64,15 +58,12 @@ export function DoubtSolverSheet({
         }),
       });
 
-      const payload = (await response.json().catch(() => null)) as {
-        answer?: string;
-        error?: string;
-      } | null;
+      const payload = (await response.json().catch(() => null)) as
+        | { answer?: string; error?: string }
+        | null;
 
       if (!response.ok || !payload?.answer) {
-        setError(
-          payload?.error ?? `The doubt solver could not answer right now (${response.status}).`,
-        );
+        setError(payload?.error ?? `The doubt solver could not answer right now (${response.status}).`);
       } else {
         setMessages((prev) => [...prev, { role: "assistant", content: payload.answer! }]);
       }
@@ -150,9 +141,7 @@ export function DoubtSolverSheet({
               >
                 <p
                   className={`whitespace-pre-wrap text-[13px] leading-snug text-pretty ${
-                    message.role === "user"
-                      ? "font-medium text-primary-foreground"
-                      : "text-foreground/80"
+                    message.role === "user" ? "font-medium text-primary-foreground" : "text-foreground/80"
                   }`}
                 >
                   {message.content}
